@@ -78,3 +78,141 @@ canvas {
   color: white;
   text-decoration: underline;
 }
+
+
+
+.header {
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+}
+
+.header .overlap-group-wrapper {
+  width: 1276px;
+  height: 959px;
+}
+
+.header .overlap-group {
+  position: relative;
+  width: 1067px;
+  height: 500px;
+  top: 43px;
+  left: 80px;
+  background-color: #08080826;
+}
+
+.header .header-text {
+  display: flex;
+  flex-direction: column;
+  width: 538px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 30px;
+  position: absolute;
+  top: 158px;
+  left: 100px;
+}
+
+.header .heading-and {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.header .heading {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.header .your-name-here {
+  display: flex;
+  flex-direction: column;
+  width: 426px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0px;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.header .text-wrapper {
+  position: relative;
+  align-self: stretch;
+  margin-top: -1.00px;
+  font-family: "Raleway-ExtraBold", Helvetica;
+  font-weight: 800;
+  color: #ffffff;
+  font-size: 44px;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.header .intro-text {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.header .div {
+  position: relative;
+  width: 492px;
+  margin-top: -1.00px;
+  font-family: "IBM Plex Mono-Regular", Helvetica;
+  font-weight: 400;
+  color: #9c9c9c;
+  font-size: 14px;
+  letter-spacing: 0.14px;
+  line-height: 24px;
+}
+
+.header .call-to-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 21px 64px;
+  position: relative;
+  flex: 0 0 auto;
+  background-color: #3e8e00;
+  border-radius: 4px;
+  border: 1px solid;
+  border-color: #61b91b;
+  box-shadow: 0px 8px 30px #3f8e0080;
+}
+
+.header .text-wrapper-2 {
+  position: relative;
+  width: fit-content;
+  margin-top: -1.00px;
+  font-family: "IBM Plex Mono-Bold", Helvetica;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 16px;
+  letter-spacing: 0;
+  line-height: normal;
+}
+
+.header .vector {
+  position: relative;
+  width: 5.89px;
+  height: 10px;
+}
+
+.header .photo-here {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  top: 95px;
+  left: 675px;
+}
