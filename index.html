@@ -6,35 +6,19 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-
-  <!-- Profile Image Circle -->
+  <!-- 3D canvas will be added by JS -->
   <img id="profile-image" src="your-image.jpg" alt="Profile" />
+  <div class="contact-box">...</div>
+  <div class="about-box">...</div>
 
-  <!-- Contact Info Box -->
-  <div class="contact-box">
-    <h2>Contact</h2>
-    <p>📞 +31 06 8482 8799</p>
-    <p>📧 <a href="mailto:sajed.sarabandi@gmail.com">sajed.sarabandi@gmail.com</a></p>
-    <p>📘 <a href="https://www.researchgate.net/profile/Sajed-Sarabandi" target="_blank">ResearchGate</a></p>
-    <p>📚 <a href="https://scholar.google.com/citations?user=hyml7ZMAAAAJ&hl=en" target="_blank">Google Scholar</a></p>
+  <!-- 🔽 ADD YOUR FIGMA SECTION HERE 🔽 -->
+  <div class="header" style="display: none;"> <!-- initially hidden -->
+    <!-- ...all your Figma HTML code here... -->
   </div>
 
-
-  <div class="about-box">
-    <h2>About Me</h2>
-    <p id="about-text"></p>
-  </div>
-
-
-  <!-- ✅ Use this version of Three.js that includes OrbitControls globally -->
-  <!-- ✅ Three.js version 0.146.0 (safe) -->
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
-
-  <!-- ✅ OrbitControls that works with it -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>
-
-  <!-- ✅ Your script file -->
   <script src="script.js"></script>
 </body>
 </html>
