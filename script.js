@@ -170,14 +170,14 @@ window.addEventListener('click', () => {
     focusOnStar = true;
     hasTyped = true;
 
-    document.querySelector('.about-box').style.display = 'block';
-    document.querySelector('.contact-box').style.display = 'block';
-    document.getElementById('profile-image').style.display = 'block';
+    //document.querySelector('.about-box').style.display = 'block';
+    //document.querySelector('.contact-box').style.display = 'block';
+    //document.getElementById('profile-image').style.display = 'block';
 
 
 
     // Start typing effect
-    typeText();
+    //typeText();
   }
 });
 
