@@ -34,11 +34,10 @@ const sunTexture = textureLoader.load('2k_sun.jpg'); // use correct path
 const geometry = new THREE.SphereGeometry(2, 64, 64);
 const material = new THREE.MeshStandardMaterial({
   map: sunTexture,
-  emissive: 0xffffff,         // white glow
-  emissiveMap: sunTexture,    // makes whole texture glow
-  emissiveIntensity: 1.5,
+  emissive: 0xffcc33,        // soft yellow glow
+  emissiveIntensity: 0.5,    // always glowing
   metalness: 0,
-  roughness: 1               // less reflectivity
+  roughness: 1
 });
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
@@ -86,36 +85,43 @@ function animate() {
     const x = Math.cos(moon.userData.angle) * moon.userData.radius;
     const z = Math.sin(moon.userData.angle) * moon.userData.radius;
 
-    moon.position.set(x, 0, z); // keep moons level on Y axis
+    moon.position.set(x, 0, z);
   });
 
-  // Raycasting for hover effect
+  // 🌟 Raycasting for hover effect
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(moons.concat(sphere));
 
+  // 🔽 ⬇️ PLACE THIS PART RIGHT HERE ⬇️ 🔽
   // Reset previous hover
   if (hoveredObject && !intersects.find(i => i.object === hoveredObject)) {
     hoveredObject.scale.set(1, 1, 1);
-    hoveredObject.material.emissive.set(0x000000);
+    if (hoveredObject !== sphere) {
+      hoveredObject.material.emissive.set(0x000000);
+    }
     hoveredObject = null;
   }
 
-  // Apply new hover
+  // New hover
   if (intersects.length > 0) {
     const target = intersects[0].object;
     if (target !== hoveredObject) {
       if (hoveredObject) {
         hoveredObject.scale.set(1, 1, 1);
-        hoveredObject.material.emissive.set(0x000000);
+        if (hoveredObject !== sphere) {
+          hoveredObject.material.emissive.set(0x000000);
+        }
       }
+
       hoveredObject = target;
-      hoveredObject.scale.set(1.2, 1.2, 1.2);
-      hoveredObject.material.emissive.set(0xffff66); // highlight glow
+      hoveredObject.scale.set(1.05, 1.05, 1.05);
+      hoveredObject.material.emissive.set(0xffff66);
     }
   }
 
   renderer.render(scene, camera);
 }
+
 
 // Handle window resize
 window.addEventListener('resize', () => {
