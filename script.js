@@ -5,18 +5,12 @@ const stars = [];
 for (let i = 0; i < starCount; i++) {
   const star = document.createElement("div");
   star.className = "star";
-  star.style.position = "absolute";
-  star.style.width = "2px";
-  star.style.height = "2px";
-  star.style.borderRadius = "50%";
-  star.style.background = "white";
-  star.style.top = Math.random() * 100 + "vh";
-  star.style.left = Math.random() * 100 + "vw";
+  star.style.top = `${Math.random() * 100}vh`;
+  star.style.left = `${Math.random() * 100}vw`;
   starContainer.appendChild(star);
   stars.push(star);
 }
 
-// Move stars with mouse
 document.addEventListener("mousemove", (e) => {
   const centerX = window.innerWidth / 2;
   const centerY = window.innerHeight / 2;
@@ -25,8 +19,8 @@ document.addEventListener("mousemove", (e) => {
   const moveY = (e.clientY - centerY) * 0.01;
 
   stars.forEach((star, i) => {
-    const offsetX = (i % 10 - 5) * moveX;
-    const offsetY = (i % 10 - 5) * moveY;
+    const offsetX = (i % 5 - 2) * moveX;
+    const offsetY = (i % 5 - 2) * moveY;
     star.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
   });
 });
