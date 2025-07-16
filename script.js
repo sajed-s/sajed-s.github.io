@@ -12,7 +12,7 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredObject = null;
 
-const targetPosition = new THREE.Vector3(0, 1.5, 3); // camera higher, looking down
+const targetPosition = new THREE.Vector3(0, 4, 3); // camera higher, looking down
 
 
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -125,7 +125,8 @@ function animate() {
   camera.position.lerp(targetPosition, 0.05);
 
   // Smoothly rotate camera to look at the star
-  camera.lookAt(0, 0.5, 0); // aim slightly *above* the sphere center
+  camera.lookAt(sphere.position); // straight ahead, center of the sphere
+ 
 
   }
   renderer.render(scene, camera);
