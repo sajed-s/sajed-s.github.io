@@ -27,10 +27,11 @@ const sunTexture = textureLoader.load('2k_sun.jpg'); // use correct path
 const geometry = new THREE.SphereGeometry(2, 64, 64);
 const material = new THREE.MeshStandardMaterial({
   map: sunTexture,
-  emissive: 0xffff00,
-  emissiveIntensity: 0.5,
-  metalness: 0.5,
-  roughness: 0.3
+  emissive: 0xffffff,         // white glow
+  emissiveMap: sunTexture,    // makes whole texture glow
+  emissiveIntensity: 1.5,
+  metalness: 0,
+  roughness: 1               // less reflectivity
 });
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
@@ -69,6 +70,7 @@ controls.enablePan = false;
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+  sphere.rotation.y += 0.001;
 
   // Move moons in orbit
   moons.forEach((moon) => {
