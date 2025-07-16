@@ -1,14 +1,18 @@
-/* Make canvas fill the entire screen */
-body, html {
+html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
   overflow: hidden;
-  background: black;
 }
 
-#starCanvas {
-  position: absolute;
+/* Background image styling */
+.bg {
+  position: fixed;
   top: 0;
   left: 0;
-  display: block;
+  width: 110%;           /* a little bigger than screen to allow movement */
+  height: 110%;
+  object-fit: cover;
+  z-index: -1;
+  transition: transform 0.1s ease-out;
 }
