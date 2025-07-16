@@ -125,7 +125,7 @@ function animate() {
   camera.position.lerp(targetPosition, 0.05);
 
   // Smoothly rotate camera to look at the star
-  camera.lookAt(0, 4.5, 0); 
+  camera.lookAt(0, 2.5, 0); 
  
 
   }
