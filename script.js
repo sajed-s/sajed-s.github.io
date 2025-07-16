@@ -48,7 +48,7 @@ for (let i = 0; i < moonCount; i++) {
   const moon = new THREE.Mesh(moonGeometry, moonMaterial);
   moon.userData = {
     angle: Math.random() * Math.PI * 2,
-    radius: 3 + i * 0.7,
+    radius: 3 + i * 1.3,
     speed: 0.001 + i * 0.0005
   };
 
@@ -58,7 +58,7 @@ for (let i = 0; i < moonCount; i++) {
 
 
 // Camera position
-camera.position.z = 5;
+camera.position.z = 10;
 
 // OrbitControls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
