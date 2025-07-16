@@ -20,13 +20,17 @@ scene.add(ambientLight);
 
 
 // Sphere
+const textureLoader = new THREE.TextureLoader();
+const sunTexture = textureLoader.load('2k_sun.jpg'); // use correct path
+
+// Create sun sphere with texture
 const geometry = new THREE.SphereGeometry(2, 64, 64);
 const material = new THREE.MeshStandardMaterial({
-  color: 0xffffee,         // pale white-yellow like a star
-  metalness: 1,            // very metallic
-  roughness: 0.1,          // smooth and shiny
-  emissive: 0xffffaa,      // glow color
-  emissiveIntensity: 1.5   // boost the glow
+  map: sunTexture,
+  emissive: 0xffff00,
+  emissiveIntensity: 0.5,
+  metalness: 0.5,
+  roughness: 0.3
 });
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
@@ -37,14 +41,14 @@ const moons = [];
 const moonCount = 5;
 
 for (let i = 0; i < moonCount; i++) {
-  const moonSize = 0.25 + Math.random() * 0.15; // varies from 0.25 to 0.4
+  const moonSize = 0.20 + Math.random() * 0.35; // varies from 0.25 to 0.4
   const moonGeometry = new THREE.SphereGeometry(moonSize, 16, 16);
   const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const moon = new THREE.Mesh(moonGeometry, moonMaterial);
   moon.userData = {
     angle: Math.random() * Math.PI * 2,
     radius: 3 + i * 0.7,
-    speed: 0.01 + i * 0.005
+    speed: 0.001 + i * 0.0005
   };
 
   moons.push(moon);
