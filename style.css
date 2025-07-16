@@ -15,12 +15,14 @@ canvas {
   left: 40px;
   width: 280px;
   padding: 20px;
-  background-color: #b30000; /* red */
+  background-color: rgba(179, 0, 0, 0.6); /* translucent red */
   border-radius: 12px;
   color: white;
   font-family: Arial, sans-serif;
-  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
   z-index: 10;
+  display: none; /* 🔴 hidden by default */
+  backdrop-filter: blur(3px); /* optional: soft glassy effect */
 }
 
 .about-box h2 {

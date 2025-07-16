@@ -11,7 +11,8 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredObject = null;
 const targetPosition = new THREE.Vector3(0, 0.5, 3.7); // camera higher, looking down
-let hasTyped = false;
+
+
 
 
 
@@ -159,6 +160,7 @@ window.addEventListener('mousemove', (event) => {
 });
 
 let focusOnStar = false;
+let hasTyped = false;
 
 window.addEventListener('click', () => {
   raycaster.setFromCamera(mouse, camera);
@@ -167,6 +169,11 @@ window.addEventListener('click', () => {
   if (intersects.length > 0 && !hasTyped) {
     focusOnStar = true;
     hasTyped = true;
+
+    // Show the box
+    document.querySelector('.about-box').style.display = 'block';
+
+    // Start typing effect
     typeText();
   }
 });
