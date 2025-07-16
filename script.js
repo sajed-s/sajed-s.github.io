@@ -12,7 +12,7 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredObject = null;
 
-
+const targetPosition = new THREE.Vector3(0, -1.5, 3); // adjust as needed
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -118,7 +118,14 @@ function animate() {
       hoveredObject.material.emissive.set(0xffff66);
     }
   }
+  if (focusOnStar) {
+  // Smoothly move camera to a close-up position
+  
+  camera.position.lerp(targetPosition, 0.05);
 
+  // Smoothly rotate camera to look at the star
+  camera.lookAt(sphere.position);
+  }
   renderer.render(scene, camera);
 }
 
@@ -133,6 +140,17 @@ window.addEventListener('resize', () => {
 window.addEventListener('mousemove', (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+let focusOnStar = false;
+
+window.addEventListener('click', () => {
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects([sphere]);
+
+  if (intersects.length > 0) {
+    focusOnStar = true;
+  }
 });
 
 
