@@ -7,6 +7,13 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let hoveredObject = null;
+
+
+
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -82,6 +89,31 @@ function animate() {
     moon.position.set(x, 0, z); // keep moons level on Y axis
   });
 
+  // Raycasting for hover effect
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(moons.concat(sphere));
+
+  // Reset previous hover
+  if (hoveredObject && !intersects.find(i => i.object === hoveredObject)) {
+    hoveredObject.scale.set(1, 1, 1);
+    hoveredObject.material.emissive.set(0x000000);
+    hoveredObject = null;
+  }
+
+  // Apply new hover
+  if (intersects.length > 0) {
+    const target = intersects[0].object;
+    if (target !== hoveredObject) {
+      if (hoveredObject) {
+        hoveredObject.scale.set(1, 1, 1);
+        hoveredObject.material.emissive.set(0x000000);
+      }
+      hoveredObject = target;
+      hoveredObject.scale.set(1.2, 1.2, 1.2);
+      hoveredObject.material.emissive.set(0xffff66); // highlight glow
+    }
+  }
+
   renderer.render(scene, camera);
 }
 
@@ -91,6 +123,12 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+window.addEventListener('mousemove', (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
 
 animate();
 
