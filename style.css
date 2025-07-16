@@ -1,10 +1,8 @@
 body {
   margin: 0;
   height: 100vh;
-  background-image: url('stars.jpg');  /* Make sure this filename matches your image */
+  background-image: url('stars.jpg'); /* Replace with your exact filename */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transition: background-position 0.1s ease-out;
-  overflow: hidden;
 }
