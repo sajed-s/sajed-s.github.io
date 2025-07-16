@@ -25,6 +25,26 @@ const material = new THREE.MeshStandardMaterial({
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
+// Create moons
+const moons = [];
+const moonCount = 5;
+
+for (let i = 0; i < moonCount; i++) {
+  const moonGeometry = new THREE.SphereGeometry(0.3, 16, 16); // small sphere
+  const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+
+  // Give each moon a different orbit radius and angle
+  moon.userData = {
+    angle: Math.random() * Math.PI * 2,
+    radius: 3 + i * 0.7, // spreads out from 3 to ~6
+    speed: 0.01 + i * 0.005 // different speeds
+  };
+
+  moons.push(moon);
+  scene.add(moon);
+}
+
 // Camera position
 camera.position.z = 5;
 
@@ -38,9 +58,19 @@ controls.enablePan = false;
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+
+  // Move moons in orbit
+  moons.forEach((moon) => {
+    moon.userData.angle += moon.userData.speed;
+
+    const x = Math.cos(moon.userData.angle) * moon.userData.radius;
+    const z = Math.sin(moon.userData.angle) * moon.userData.radius;
+
+    moon.position.set(x, 0, z); // keep moons level on Y axis
+  });
+
   renderer.render(scene, camera);
 }
-animate();
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -48,3 +78,5 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
