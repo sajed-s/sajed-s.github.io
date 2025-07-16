@@ -12,7 +12,7 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredObject = null;
 
-const targetPosition = new THREE.Vector3(0, 4, 3); // camera higher, looking down
+const targetPosition = new THREE.Vector3(0, 1.5, 3); // camera higher, looking down
 
 
 renderer.setSize(window.innerWidth, window.innerHeight);
