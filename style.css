@@ -1,0 +1,18 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Background image styling */
+.bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 110%;           /* a little bigger than screen to allow movement */
+  height: 110%;
+  object-fit: cover;
+  z-index: -1;
+  transition: transform 0.1s ease-out;
+}
