@@ -15,35 +15,42 @@ const light = new THREE.PointLight(0xffffff, 1);
 light.position.set(10, 10, 10);
 scene.add(light);
 
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // soft fill light
+scene.add(ambientLight);
+
+
 // Sphere
 const geometry = new THREE.SphereGeometry(2, 64, 64);
 const material = new THREE.MeshStandardMaterial({
-  color: 0x0077ff,
-  metalness: 0.5,
-  roughness: 0.2
+  color: 0xffffee,         // pale white-yellow like a star
+  metalness: 1,            // very metallic
+  roughness: 0.1,          // smooth and shiny
+  emissive: 0xffffaa,      // glow color
+  emissiveIntensity: 1.5   // boost the glow
 });
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
+
 
 // Create moons
 const moons = [];
 const moonCount = 5;
 
 for (let i = 0; i < moonCount; i++) {
-  const moonGeometry = new THREE.SphereGeometry(0.3, 16, 16); // small sphere
+  const moonSize = 0.25 + Math.random() * 0.15; // varies from 0.25 to 0.4
+  const moonGeometry = new THREE.SphereGeometry(moonSize, 16, 16);
   const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const moon = new THREE.Mesh(moonGeometry, moonMaterial);
-
-  // Give each moon a different orbit radius and angle
   moon.userData = {
     angle: Math.random() * Math.PI * 2,
-    radius: 3 + i * 0.7, // spreads out from 3 to ~6
-    speed: 0.001 + i * 0.0005 // different speeds
+    radius: 3 + i * 0.7,
+    speed: 0.01 + i * 0.005
   };
 
   moons.push(moon);
   scene.add(moon);
 }
+
 
 // Camera position
 camera.position.z = 5;
