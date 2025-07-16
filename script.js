@@ -38,7 +38,7 @@ for (let i = 0; i < moonCount; i++) {
   moon.userData = {
     angle: Math.random() * Math.PI * 2,
     radius: 3 + i * 0.7, // spreads out from 3 to ~6
-    speed: 0.01 + i * 0.005 // different speeds
+    speed: 0.001 + i * 0.0005 // different speeds
   };
 
   moons.push(moon);
