@@ -170,8 +170,11 @@ window.addEventListener('click', () => {
     focusOnStar = true;
     hasTyped = true;
 
-    // Show the box
     document.querySelector('.about-box').style.display = 'block';
+    document.querySelector('.contact-box').style.display = 'block';
+    document.getElementById('profile-image').style.display = 'block';
+
+
 
     // Start typing effect
     typeText();
