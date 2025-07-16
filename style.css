@@ -1,24 +1,10 @@
-* {
+body {
   margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body, html {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
-.background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 110%; /* a bit larger for movement space */
-  height: 110%;
-  background-image: url('stars.jpg'); /* <-- update if your image name is different */
+  height: 100vh;
+  background-image: url('stars.jpg');  /* Make sure this filename matches your image */
   background-size: cover;
   background-position: center;
-  z-index: -1;
-  transition: transform 0.1s ease-out;
+  background-repeat: no-repeat;
+  transition: background-position 0.1s ease-out;
+  overflow: hidden;
 }
