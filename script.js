@@ -7,12 +7,12 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredObject = null;
-
 const targetPosition = new THREE.Vector3(0, 0.5, 3.7); // camera higher, looking down
+let hasTyped = false;
+
 
 
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -132,6 +132,19 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+const aboutText = "I'm a software developer interested in space research and data science.";
+let currentChar = 0;
+
+function typeText() {
+  const textElement = document.getElementById("about-text");
+  if (currentChar < aboutText.length) {
+    textElement.textContent += aboutText.charAt(currentChar);
+    currentChar++;
+    setTimeout(typeText, 40); // speed of typing (ms)
+  }
+}
+
+
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -151,11 +164,15 @@ window.addEventListener('click', () => {
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([sphere]);
 
-  if (intersects.length > 0) {
+  if (intersects.length > 0 && !hasTyped) {
     focusOnStar = true;
+    hasTyped = true;
+    typeText();
   }
 });
 
 
 animate();
+
+
 
