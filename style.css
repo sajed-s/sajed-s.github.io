@@ -9,6 +9,7 @@ canvas {
   display: block;
 }
 
+/* ---------- About Box ---------- */
 .about-box {
   position: absolute;
   top: 20%;
@@ -21,15 +22,19 @@ canvas {
   font-family: Arial, sans-serif;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
   z-index: 10;
-  display: none; /* 🔴 hidden by default */
-  backdrop-filter: blur(3px); /* optional: soft glassy effect */
+  display: none;
+  backdrop-filter: blur(3px);
 }
 
 .about-box h2 {
   margin-top: 0;
   font-size: 24px;
+  border-bottom: 2px solid white;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
 
-  /* Profile Image (center above the sun) */
+/* ---------- Profile Image ---------- */
 #profile-image {
   position: absolute;
   top: 15%;
@@ -41,10 +46,11 @@ canvas {
   border: 4px solid white;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
   display: none;
+  object-fit: cover;
   z-index: 10;
 }
 
-/* Contact Info Box (right side) */
+/* ---------- Contact Info Box ---------- */
 .contact-box {
   position: absolute;
   top: 20%;
@@ -71,9 +77,4 @@ canvas {
 .contact-box a {
   color: white;
   text-decoration: underline;
-}
-
-  border-bottom: 2px solid white;
-  padding-bottom: 5px;
-  margin-bottom: 10px;
 }
