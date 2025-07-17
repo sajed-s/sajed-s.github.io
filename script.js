@@ -6,6 +6,9 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
+
+scene.add(camera);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -15,6 +18,15 @@ let hoveredObject = null;
 let focusOnStar   = false;
 let focusHome     = false;
 let hasTyped      = false;
+
+let focusOnMoon      = false;
+let moonTargetPosition = new THREE.Vector3();
+const moonIndexToZoom  = 3;
+
+let satellite = null;
+let satelliteAngle = 0;
+const satelliteOrbitRadius = 0.8;  // distance from moon center
+
 
 // Positions to lerp to/from
 const targetPosition = new THREE.Vector3(0, 0.5, 3.7);
@@ -64,20 +76,25 @@ const sunMat     = new THREE.MeshStandardMaterial({
 const sphere = new THREE.Mesh(sunGeo, sunMat);
 scene.add(sphere);
 
+
+
+
+
+
 // Moons with individual textures
 const moons            = [];
 const moonCount        = 5;
 const moonTexturePaths = [
-  '8k_jupiter.jpg',
-  '8k_mars.jpg',
-  '8k_venus_surface.jpg',
-  '10k_earth.jpg',
-  '8k_mercury.jpg'
+  '2k_jupiter.jpg',
+  '2k_mars.jpg',
+  '2k_venus.jpg',
+  '2k_earth_daymap.jpg',
+  '2k_neptune.jpg'
 ];
 const moonTextures = moonTexturePaths.map(p => loader.load(p));
 
 for (let i = 0; i < moonCount; i++) {
-  const size = 0.2 + Math.random() * 0.35;
+  const size = 0.2 + Math.random() * 0.65;
   const geo  = new THREE.SphereGeometry(size, 16, 16);
   const mat  = new THREE.MeshStandardMaterial({
     map: moonTextures[i % moonTextures.length]
@@ -85,7 +102,7 @@ for (let i = 0; i < moonCount; i++) {
   const moon = new THREE.Mesh(geo, mat);
   moon.userData = {
     angle:  Math.random() * Math.PI * 2,
-    radius: 3 + i * 1.3,
+    radius: 5 + i * 1.5,
     speed:  0.001 + i * 0.0005
   };
   moons.push(moon);
@@ -107,8 +124,10 @@ const homeCamTarget = controls.target.clone();
 document.getElementById('home-button').addEventListener('click', () => {
   focusOnStar = false;
   focusHome   = true;
+  focusOnMoon = false;
   hasTyped    = false;
   document.querySelector('.header').style.display = 'none';
+  if (satellite) satellite.visible = false;
 });
 
 // Typing effect setup
@@ -138,6 +157,7 @@ function animate() {
     moon.position.set(x, 0, z);
   });
 
+
   // Hover highlighting
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects([sphere, ...moons]);
@@ -158,6 +178,15 @@ function animate() {
       hoveredObject.material.emissive.set(0xffff66);
     }
   }
+  if (focusOnMoon) {
+    // Camera smoothly follows the moving moon
+    const moonPos = moons[moonIndexToZoom].position;
+    const desiredCam = moonPos.clone().add(new THREE.Vector3(0, 0.5, 1.5));
+    camera.position.lerp(desiredCam, 0.05);
+    controls.target.lerp(moonPos, 0.05);
+    controls.update();
+  }
+
 
   // Smooth zoom‑in on star
   if (focusOnStar) {
@@ -187,20 +216,68 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
 window.addEventListener('mousemove', e => {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 });
+
 window.addEventListener('click', () => {
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects([sphere]);
-  if (intersects.length > 0 && !hasTyped) {
+
+  // 1) Check the 4th moon first
+  const moonHits = raycaster.intersectObject(moons[moonIndexToZoom]);
+  if (moonHits.length > 0) {
+    focusOnMoon = true;
+    focusOnStar = false;
+    hasTyped    = false;
+    document.querySelector('.header').style.display = 'none';
+
+    // Smooth‑zoom target above the moon
+    moonTargetPosition.copy(moons[moonIndexToZoom].position)
+                      .add(new THREE.Vector3(0, 0.5, 1.5));
+
+    // Lazy‑load & attach the satellite HUD once
+    if (!satellite) {
+      const gltfLoader = new THREE.GLTFLoader();
+      const dracoLoader = new THREE.DRACOLoader();
+      dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/libs/draco/');
+      gltfLoader.setDRACOLoader(dracoLoader);
+
+      gltfLoader.load('satellite.glb', (gltf) => {
+        satellite = gltf.scene;
+        satellite.scale.set(0.2, 0.2, 0.2);
+
+        // Parent it to the camera so it moves with the view
+        camera.add(satellite);
+
+        // Position it in camera‑space: 2 units left, 0 up/down, 3 units forward
+        satellite.position.set(-2, 0, -3);
+
+        // Start hidden
+        satellite.visible = true;
+      }, undefined, err => console.error(err));
+    } else {
+      // If already loaded, just show it again
+      satellite.visible = true;
+    }
+
+    return; // skip the sun‑click logic
+  }
+
+  // 2) Otherwise, check the sun
+  const sunHits = raycaster.intersectObject(sphere);
+  if (sunHits.length > 0 && !hasTyped) {
     focusOnStar = true;
     hasTyped    = true;
+    focusOnMoon = false;
     document.querySelector('.header').style.display = 'block';
+    if (satellite) satellite.visible = false;
     typeText();
   }
 });
+
+
 
 // Start animation
 animate();
