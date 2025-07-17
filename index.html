@@ -1,22 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>3D Sphere</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio with 3D Sphere</title>
+  <link rel="stylesheet" href="globals.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- ✅ Top menu should be first -->
+  <div class="top-menu">
+    <div class="div-wrapper">
+      <div class="text-wrapper" id="home-button">Home</div>
+    </div>
+    <div class="div-wrapper">
+      <div class="text-wrapper">Case Studies</div>
+    </div>
+    <div class="div-wrapper">
+      <div class="text-wrapper">Skills</div>
+    </div>
+    <div class="div-wrapper">
+      <div class="text-wrapper">Work Experiences</div>
+    </div>
+    <div class="div-wrapper">
+      <div class="text-wrapper">Get In Touch</div>
+    </div>
+  </div>
+
   <!-- 3D canvas will be added by JS -->
   <img id="profile-image" src="your-image.jpg" alt="Profile" />
   <div class="contact-box">...</div>
-  <div class="about-box">...</div>
-
-  <!-- 🔽 ADD YOUR FIGMA SECTION HERE 🔽 -->
-  <div class="header" style="display: none;"> <!-- initially hidden -->
-    <!-- ...all your Figma HTML code here... -->
+  <div class="about-box">
+    <h2>About Me</h2>
+    <p id="about-text"></p>
   </div>
 
-  <!-- Scripts -->
+  <!-- ✅ Only one .header div here, hidden until sun click -->
+  <div class="header" style="display: none;">
+    <div class="overlap-group-wrapper">
+      <div class="overlap-group">
+        <div class="header-text">
+          <div class="heading-and">
+            <div class="heading">
+              <div class="your-name-here">
+                <div class="text-wrapper">Sajed Sarabandi</div>
+              </div>
+            </div>
+            <div class="intro-text">
+              <p class="div">
+                I’m a computer engineer interested in space and computer vision
+              </p>
+            </div>
+          </div>
+          <div class="call-to-action">
+            <div class="text-wrapper-2">Let’s get started</div>
+            <img class="vector" src="img/vector.svg" alt="Arrow Icon" />
+          </div>
+        </div>
+        <img
+          class="photo-here"
+          src="your-image.png"
+          alt="My Photo"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js and your script -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>
   <script src="script.js"></script>

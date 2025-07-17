@@ -9,177 +9,198 @@ const camera = new THREE.PerspectiveCamera(
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+
+// Flags & state
 let hoveredObject = null;
-const targetPosition = new THREE.Vector3(0, 0.5, 3.7); // camera higher, looking down
+let focusOnStar   = false;
+let focusHome     = false;
+let hasTyped      = false;
 
+// Positions to lerp to/from
+const targetPosition = new THREE.Vector3(0, 0.5, 3.7);
 
-
-
-
+// Renderer + canvas styling
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+renderer.domElement.style.position = 'fixed';
+renderer.domElement.style.top      = '0';
+renderer.domElement.style.left     = '0';
+renderer.domElement.style.zIndex   = '0';
 
 // Lighting
 const light = new THREE.PointLight(0xffffff, 1);
 light.position.set(10, 10, 10);
 scene.add(light);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.2); // soft fill light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
 scene.add(ambientLight);
 
 
-// Sphere
-const textureLoader = new THREE.TextureLoader();
-const sunTexture = textureLoader.load('2k_sun.jpg'); // use correct path
 
-// Create sun sphere with texture
-const geometry = new THREE.SphereGeometry(2, 64, 64);
-const material = new THREE.MeshStandardMaterial({
-  map: sunTexture,
-  emissive: 0xffcc33,        // soft yellow glow
-  emissiveIntensity: 0.5,    // always glowing
-  metalness: 0,
-  roughness: 1
+// Sun sphere
+const loader     = new THREE.TextureLoader();
+
+// ——— STAR SKY BACKGROUND ———
+const starTexture = loader.load('stars.jpg');
+const skyGeo      = new THREE.SphereGeometry(100, 64, 64);
+const skyMat      = new THREE.MeshBasicMaterial({
+  map:        starTexture,
+  side:       THREE.BackSide,
+  depthWrite: false
 });
-const sphere = new THREE.Mesh(geometry, material);
+const sky = new THREE.Mesh(skyGeo, skyMat);
+scene.add(sky);
+
+
+const sunTexture = loader.load('8k_sun.jpg');
+const sunGeo     = new THREE.SphereGeometry(2, 64, 64);
+const sunMat     = new THREE.MeshStandardMaterial({
+  map:             sunTexture,
+  emissive:        0xffcc33,
+  emissiveIntensity: 0.5,
+  metalness:       0,
+  roughness:       1
+});
+const sphere = new THREE.Mesh(sunGeo, sunMat);
 scene.add(sphere);
 
-
-// Create moons
-const moons = [];
-const moonCount = 5;
+// Moons with individual textures
+const moons            = [];
+const moonCount        = 5;
+const moonTexturePaths = [
+  '8k_jupiter.jpg',
+  '8k_mars.jpg',
+  '8k_venus_surface.jpg',
+  '10k_earth.jpg',
+  '8k_mercury.jpg'
+];
+const moonTextures = moonTexturePaths.map(p => loader.load(p));
 
 for (let i = 0; i < moonCount; i++) {
-  const moonSize = 0.20 + Math.random() * 0.35; // varies from 0.25 to 0.4
-  const moonGeometry = new THREE.SphereGeometry(moonSize, 16, 16);
-  const moonMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+  const size = 0.2 + Math.random() * 0.35;
+  const geo  = new THREE.SphereGeometry(size, 16, 16);
+  const mat  = new THREE.MeshStandardMaterial({
+    map: moonTextures[i % moonTextures.length]
+  });
+  const moon = new THREE.Mesh(geo, mat);
   moon.userData = {
-    angle: Math.random() * Math.PI * 2,
+    angle:  Math.random() * Math.PI * 2,
     radius: 3 + i * 1.3,
-    speed: 0.001 + i * 0.0005
+    speed:  0.001 + i * 0.0005
   };
-
   moons.push(moon);
   scene.add(moon);
 }
 
-
-// Camera position
+// Camera & controls
 camera.position.z = 10;
-
-// OrbitControls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.enablePan = false;
+controls.enablePan    = false;
 
-// Animation loop
+// Save the “home” camera/target
+const homeCamPos    = camera.position.clone();
+const homeCamTarget = controls.target.clone();
+
+// Home button click → start smooth return
+document.getElementById('home-button').addEventListener('click', () => {
+  focusOnStar = false;
+  focusHome   = true;
+  hasTyped    = false;
+  document.querySelector('.header').style.display = 'none';
+});
+
+// Typing effect setup
+const aboutText = "I'm a software developer interested in space research and data science.";
+let currentChar = 0;
+function typeText() {
+  const el = document.getElementById("about-text");
+  if (currentChar < aboutText.length) {
+    el.textContent += aboutText.charAt(currentChar++);
+    setTimeout(typeText, 40);
+  }
+}
+
+// Main animation loop
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+
+  // Rotate sun
   sphere.rotation.y += 0.001;
 
-  // Move moons in orbit
-  moons.forEach((moon) => {
+  // Orbit moons
+  moons.forEach(moon => {
     moon.userData.angle += moon.userData.speed;
-
     const x = Math.cos(moon.userData.angle) * moon.userData.radius;
     const z = Math.sin(moon.userData.angle) * moon.userData.radius;
-
     moon.position.set(x, 0, z);
   });
 
-  // 🌟 Raycasting for hover effect
+  // Hover highlighting
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(moons.concat(sphere));
-
-  // 🔽 ⬇️ PLACE THIS PART RIGHT HERE ⬇️ 🔽
-  // Reset previous hover
-  if (hoveredObject && !intersects.find(i => i.object === hoveredObject)) {
-    hoveredObject.scale.set(1, 1, 1);
-    if (hoveredObject !== sphere) {
-      hoveredObject.material.emissive.set(0x000000);
-    }
+  const hits = raycaster.intersectObjects([sphere, ...moons]);
+  if (hoveredObject && !hits.find(i => i.object === hoveredObject)) {
+    hoveredObject.scale.set(1,1,1);
+    if (hoveredObject !== sphere) hoveredObject.material.emissive.set(0x000000);
     hoveredObject = null;
   }
-
-  // New hover
-  if (intersects.length > 0) {
-    const target = intersects[0].object;
-    if (target !== hoveredObject) {
+  if (hits.length) {
+    const obj = hits[0].object;
+    if (obj !== hoveredObject) {
       if (hoveredObject) {
-        hoveredObject.scale.set(1, 1, 1);
-        if (hoveredObject !== sphere) {
-          hoveredObject.material.emissive.set(0x000000);
-        }
+        hoveredObject.scale.set(1,1,1);
+        if (hoveredObject !== sphere) hoveredObject.material.emissive.set(0x000000);
       }
-
-      hoveredObject = target;
-      hoveredObject.scale.set(1.05, 1.05, 1.05);
+      hoveredObject = obj;
+      hoveredObject.scale.set(1.05,1.05,1.05);
       hoveredObject.material.emissive.set(0xffff66);
     }
   }
+
+  // Smooth zoom‑in on star
   if (focusOnStar) {
-  // Smoothly move camera to a close-up position
-  
-  camera.position.lerp(targetPosition, 0.01);
-
-  // Smoothly rotate camera to look at the star
-  camera.lookAt(0, 3, 0); 
- 
-
+    camera.position.lerp(targetPosition, 0.01);
+    camera.lookAt(0,3,0);
   }
+
+  // Smooth return‑home
+  if (focusHome) {
+    camera.position.lerp(homeCamPos, 0.05);
+    controls.target.lerp(homeCamTarget, 0.05);
+    controls.update();
+    if (camera.position.distanceTo(homeCamPos) < 0.01) {
+      camera.position.copy(homeCamPos);
+      controls.target.copy(homeCamTarget);
+      controls.update();
+      focusHome = false;
+    }
+  }
+
   renderer.render(scene, camera);
 }
 
-const aboutText = "I'm a software developer interested in space research and data science.";
-let currentChar = 0;
-
-function typeText() {
-  const textElement = document.getElementById("about-text");
-  if (currentChar < aboutText.length) {
-    textElement.textContent += aboutText.charAt(currentChar);
-    currentChar++;
-    setTimeout(typeText, 40); // speed of typing (ms)
-  }
-}
-
-
-
-// Handle window resize
+// Event listeners
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
-window.addEventListener('mousemove', (event) => {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+window.addEventListener('mousemove', e => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 });
-
-let focusOnStar = false;
-let hasTyped = false;
-
 window.addEventListener('click', () => {
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects([sphere]);
-
   if (intersects.length > 0 && !hasTyped) {
     focusOnStar = true;
-    hasTyped = true;
-
-    // 🔽 ADD THIS TO SHOW YOUR SECTION
+    hasTyped    = true;
     document.querySelector('.header').style.display = 'block';
-
-    // Optional: start typing animation or show other things
     typeText();
   }
 });
 
-
+// Start animation
 animate();
-
-
-

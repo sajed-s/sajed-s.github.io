@@ -3,10 +3,14 @@ body, html {
   padding: 0;
   overflow: hidden;
   background: black;
+  padding-top: 70px;
 }
 
 canvas {
-  display: block;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  z-index: 0;
 }
 
 /* ---------- About Box ---------- */
@@ -82,11 +86,17 @@ canvas {
 
 
 .header {
-  background-color: transparent;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
+  z-index: 10; /* Higher than canvas */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+  background-color: rgba(0, 0, 0, 0.3); /* optional transparent overlay */
 }
 
 .header .overlap-group-wrapper {
@@ -209,10 +219,76 @@ canvas {
   height: 10px;
 }
 
-.header .photo-here {
-  position: absolute;
-  width: 350px;
-  height: 350px;
-  top: 95px;
-  left: 675px;
+.photo-here {
+  position: absolute;          /* take it out of document flow */
+  top: 20%;                    /* adjust this to move it up/down */
+  left: 200%;                   /* position halfway across */
+  transform: translateX(-50%); /* pull back by half its own width */
+  
+  width: 500px;
+  height: 500px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
+
+
+/* 1. Fix the nav bar at the top, center the items */
+.top-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 70px;
+  padding: 20px 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+/* 2. Push the page content down so nothing hides under the bar */
+body {
+  margin: 0;
+  padding-top: 70px;   /* match nav‑bar height + padding */
+  overflow-x: hidden;
+}
+
+/* 3. Base styles for each menu item */
+.top-menu .text-wrapper {
+  font-family: "Impact", sans-serif;
+  font-size: 30px;
+  color: #fff;          /* fallback white */
+  position: relative;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+/* 4. On hover, clip a moving rainbow gradient into the text */
+.top-menu .text-wrapper:hover {
+  color: transparent;                      /* hide the white fallback */
+  background: linear-gradient(
+    90deg,
+    rgb(248, 211, 0),
+    rgb(219, 65, 4),
+    rgb(222, 226, 4),
+    rgb(226, 204, 2),
+    rgb(209, 171, 2),
+    rgba(189, 119, 16, 0.979)
+  );
+  background-size: 200% 100%;              /* allow room for sliding */
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: slide 2s linear infinite;     /* sweep left→right */
+}
+
+/* 5. Keyframes for the gradient sweep */
+@keyframes slide {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+
+
