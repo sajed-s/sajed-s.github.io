@@ -15,7 +15,7 @@
       <div class="text-wrapper" id="home-button">Home</div>
     </div>
     <div class="div-wrapper">
-      <div class="text-wrapper">Case Studies</div>
+      <div class="text-wrapper" id="projects-button">Projects</div>
     </div>
     <div class="div-wrapper">
       <div class="text-wrapper">Skills</div>
@@ -39,38 +39,60 @@
     <p id="about-text"></p>
   </div>
 
-  <!-- ✅ Only one .header div here, hidden until sun click -->
-  <div class="header" style="display: none;">
-    <div class="overlap-group-wrapper">
-      <div class="overlap-group">
-        <div class="header-text">
-          <div class="heading-and">
-            <div class="heading">
-              <div class="your-name-here">
-                <div class="text-wrapper">Sajed Sarabandi</div>
-              </div>
-            </div>
-            <div class="intro-text">
-              <p class="div">
-                I’m a computer engineer interested in space and computer vision
-              </p>
-            </div>
-          </div>
-          <div class="call-to-action">
-            <div class="text-wrapper-2">Let’s get started</div>
-            <img class="vector" src="img/vector.svg" alt="Arrow Icon" />
-          </div>
-        </div>
-        <img
-          class="photo-here"
-          src="your-image.png"
-          alt="My Photo"
-        />
-      </div>
-    </div>
+
+
+  
+  <section class="projects-overlay" id="projects-overlay" aria-hidden="true">
+  <button class="overlay-close" id="projects-close" aria-label="Close case studies">&times;</button>
+
+  <!-- LEFT column: the 3 category cards (stacked) -->
+  <div class="projects-grid">
+    <article class="project-card" data-key="bioinformatics">
+      <div class="card-media"><img src="bio.jpg" alt="Bioinformatics" class="card-img"></div>
+      <header class="card-header"><h3>Bioinformatics</h3></header>
+    </article>
+
+    <article class="project-card" data-key="srs">
+      <div class="card-media"><img src="sr.jpg" alt="Satellite Remote Sensing" class="card-img"></div>
+      <header class="card-header"><h3>Satellite Remote Sensing</h3></header>
+    </article>
+
+    <article class="project-card" data-key="cv">
+      <div class="card-media"><img src="cv.jpg" alt="Computer Vision" class="card-img"></div>
+      <header class="card-header"><h3>Computer Vision</h3></header>
+    </article>
   </div>
 
-  <!-- Three.js and your script -->
+  <!-- RIGHT column: the drawer (sibling, not nested) -->
+  <div class="projects-drawer" id="projects-drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h2 id="drawer-title">Projects</h2>
+      <button class="drawer-close" id="drawer-close" aria-label="Close projects list">&times;</button>
+    </div>
+    <div class="project-list" id="project-list" role="list"></div>
+  </div>
+</section>
+
+
+  
+<section class="home-overlay" id="home-overlay" aria-hidden="true">
+  <button class="overlay-close" id="home-close" aria-label="Close home overlay">&times;</button>
+  <div class="home-grid">
+    <div class="panel image-panel">
+      <img src="your-image.png" alt="Your portrait" class="overlay-photo">
+    </div>
+    <div class="panel info-panel">
+      <h1>Sajed Sarabandi</h1>
+      <h2>Frontend / ML / CV</h2>
+      <p>Short intro about you goes here. We can style this however you like.</p>
+
+  
+  </div>
+</section>
+
+
+  
+<!-- Three.js and your script -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>
   

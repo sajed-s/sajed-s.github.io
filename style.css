@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+
 body, html {
   margin: 0;
   padding: 0;
@@ -293,3 +295,472 @@ body {
 
 
 
+
+
+.project-card:hover,
+.project-card:focus-within,
+.project-card:focus-visible {
+  transform: translateY(-4px) scale(1.06);
+  border-color: rgba(102, 166, 255, 0.7);
+  box-shadow: 0 14px 40px rgba(102,166,255,0.28);
+}
+
+/* === Overlays base === */
+.projects-overlay,
+.home-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;          /* above canvas, below top menu (z:100) */
+  padding: 24px;
+  background: transparent; /* keep the planet scene visible */
+}
+
+.projects-overlay.open,
+.home-overlay.open {
+  display: flex;
+}
+
+/* Layouts inside (basic so it just works) */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 24px;
+  width: min(1100px, 95vw);
+}
+
+.project-card {
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0, 17, 34, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.card-media { height: 180px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.062); }
+.card-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.card-img[src=""], .card-img:not([src]) { display: none; }
+
+/* Simple Home two-column grid (so your existing HTML renders nicely) */
+.home-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; width: min(1100px, 94vw); }
+.home-overlay .panel {
+  min-height: 320px; padding: 24px; border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0, 17, 34, 0.35);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+.overlay-photo { width: 100%; height: 100%; max-height: 460px; object-fit: cover; border-radius: 14px; }
+@media (max-width: 960px){ .home-grid{ grid-template-columns: 1fr; } .projects-grid{ grid-template-columns: 1fr; } }
+.projects-overlay .overlay-close { display: none; }
+.home-overlay .overlay-close { display: none; }
+/* Project card titles: center, new font, new color */
+.projects-overlay .project-card .card-header {
+  text-align: center;
+}
+
+.projects-overlay .project-card .card-header h3 {
+  margin: 12px 0 0;
+  font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-size: clamp(18px, 2.2vw, 24px);
+  color: #e6f1ff; /* change this to your accent, e.g. #66a6ff */
+  /* optional glow: */
+  /* text-shadow: 0 0 18px rgba(102, 166, 255, 0.35); */
+}
+
+
+/* Use the same title font as Projects (optional) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap');
+
+/* === Home overlay typography === */
+.home-overlay .info-panel {
+  text-align: center;               /* center everything */
+}
+
+.home-overlay .info-panel h1 {
+  font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 5vw, 48px);
+  letter-spacing: 0.3px;
+  color: #e6f1ff;                   /* heading color */
+  margin: 0 0 10px;
+}
+
+.home-overlay .info-panel h2 {
+  font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(16px, 2.5vw, 22px);
+  color: #66a6ff;                   /* subtitle/accent */
+  margin: 0 0 14px;
+}
+
+.home-overlay .info-panel p {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  font-size: clamp(14px, 2.2vw, 18px);
+  line-height: 1.65;
+  color: #c9d6e3;                   /* body text color */
+  margin: 0;
+  max-width: 60ch;                  /* comfy line length */
+  margin-inline: auto;              /* center the paragraph block */
+}
+
+/* ===== Category -> Projects Drawer ===== */
+.projects-overlay { position: fixed; } /* likely already fixed; OK to keep */
+
+.projects-drawer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 24px;
+  width: min(1200px, 95vw);
+  max-height: 56vh;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0, 17, 34, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  display: none;
+  z-index: 22;
+}
+.projects-drawer.open { display: block; }
+
+.projects-drawer .drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.projects-drawer h2 {
+  margin: 0;
+  font-size: clamp(16px, 2vw, 22px);
+  color: #e6f1ff;
+  letter-spacing: .3px;
+}
+.drawer-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform .18s ease;
+}
+.drawer-close:hover { transform: rotate(90deg); }
+
+/* Scrollable grid of projects */
+.project-list {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  max-height: calc(56vh - 60px);
+  overflow: auto;
+  padding: 6px;
+}
+
+/* Project item card + hover animation */
+.project-item {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  border-radius: 14px;
+  padding: 16px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.project-item:hover, .project-item:focus-visible {
+  transform: translateY(-4px) scale(1.03);
+  border-color: rgba(102,166,255,.7);
+  box-shadow: 0 12px 30px rgba(102,166,255,.22);
+}
+.project-item h4 {
+  margin: 0 0 6px;
+  font-size: clamp(14px, 1.8vw, 18px);
+  color: #e6f1ff;
+  letter-spacing: .2px;
+}
+.project-item .meta {
+  font-size: 12px;
+  opacity: .8;
+  color: #c9d6e3;
+}
+/* Make the whole project item clickable when a link is present */
+.project-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Nice keyboard focus on the link */
+.project-link:focus-visible {
+  outline: 2px solid rgba(102,166,255,.8);
+  outline-offset: 6px;
+  border-radius: 10px;
+}
+
+/* === Two-column layout for Projects overlay === */
+.projects-overlay.open {
+  display: grid;                     /* only when open */
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 24px;
+  align-items: start;
+  justify-content: center;
+  padding: 28px;
+}
+
+
+/* Left column: the three category cards stacked, with a subtle slide-in */
+.projects-overlay .projects-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  transform: translateX(30px);
+  opacity: 0.98;
+  transition: transform .35s ease, opacity .35s ease;
+}
+.projects-overlay.shifted .projects-grid { transform: translateX(0); }
+
+/* Right column: the drawer now lives in the right grid column (not absolute) */
+.projects-drawer {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  max-height: calc(100vh - 140px);
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0, 17, 34, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  display: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 1;
+}
+.projects-drawer.open { display: block; opacity: 1; transform: translateY(0); }
+
+.projects-drawer .drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+#drawer-title { margin: 0; font-size: clamp(16px,2vw,22px); color: #e6f1ff; }
+
+/* Scrollable project list on the right */
+.project-list {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr;     /* single column, vertical scroll */
+  gap: 16px;
+  max-height: calc(100vh - 200px);
+  overflow: auto;
+  padding: 6px;
+}
+
+/* Project card + hover */
+.project-item {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.project-item:hover, .project-item:focus-visible {
+  transform: translateY(-4px) scale(1.03);
+  border-color: rgba(102,166,255,.7);
+  box-shadow: 0 12px 30px rgba(102,166,255,.22);
+}
+
+/* Optional image per project */
+.project-thumb {
+  width: 100%; height: 160px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+.project-thumb[src=""], .project-thumb:not([src]) { display: none; }
+
+/* Make the whole item clickable when it’s a link */
+.project-link { display: block; color: inherit; text-decoration: none; }
+.project-link:focus-visible { outline: 2px solid rgba(102,166,255,.8); outline-offset: 6px; border-radius: 10px; }
+
+/* Small screens: stack columns */
+@media (max-width: 900px){
+  .projects-overlay { grid-template-columns: 1fr; }
+  .projects-drawer { max-height: none; }
+  .project-list    { max-height: none; }
+}
+
+.projects-overlay .projects-grid { transform: translateX(30px); transition: transform .35s ease, opacity .35s ease; }
+.projects-overlay.shifted .projects-grid { transform: translateX(0); }
+
+/* === Make category cards ~0.8x === */
+.projects-overlay .projects-grid { 
+  max-width: 300px; /* was ~360px */
+}
+
+.projects-overlay .project-card {
+  padding: 12px;              /* was ~16px */
+  border-radius: 14px;        /* was ~18px */
+  min-height: unset;          /* ensure shrink applies cleanly */
+}
+
+.projects-overlay .project-card .card-media {
+  height: 144px;              /* was 180px -> 0.8x */
+}
+
+.projects-overlay .project-card .card-header h3 {
+  font-size: clamp(14px, 1.6vw, 20px);  /* slightly smaller title */
+}
+
+/* keep your hover lift/glow exactly as before */
+/* Make sure the overlay has full height to center against */
+.projects-overlay.open { 
+  min-height: 100vh;    /* overlay already fills screen, this guarantees centering math */
+}
+
+/* Center the LEFT column (the category stack) vertically */
+.projects-overlay .projects-grid {
+  align-self: center;   /* vertical centering within the grid row */
+  /* keep it left-aligned inside its column */
+  justify-self: start;
+  /* optional: if you want it perfectly centered ignoring padding, uncomment: */
+  /* margin-block: auto; */
+}
+
+/* Keep the RIGHT column (drawer) pinned to the top */
+.projects-drawer {
+  align-self: start;
+}
+
+/* On small screens (one column), let it stretch naturally */
+@media (max-width: 900px) {
+  .projects-overlay .projects-grid { 
+    align-self: stretch; 
+  }
+}
+
+/* Put the drawer LEFT within the right column */
+.projects-overlay.open { 
+  justify-items: stretch;          /* stop centering grid children */
+}
+
+.projects-drawer {
+  width: min(900px, 100%);         /* finite width so it can “sit left” */
+  justify-self: start;             /* ← left-align in the right column */
+  align-self: start;
+  margin-inline: 0 !important;     /* kill any previous centering margins */
+  margin-left: 0;                  
+  margin-right: auto;              /* push away from the right edge */
+  /* optional: small gutter from the left column */
+  /* margin-left: clamp(8px, 2vw, 24px); */
+}
+
+/* Make the project cards fill the drawer (not centered inside) */
+.project-list { 
+  justify-items: stretch;
+}
+.project-item { 
+  width: 100%;
+}
+
+/* === 3-up grid in the drawer === */
+.projects-drawer .project-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr)); /* 3 columns */
+  gap: clamp(12px, 2vw, 20px);
+  align-content: start;
+  justify-items: stretch;  /* cards fill the column width */
+}
+
+/* Cards should fill the cell (not a fixed width) */
+.project-item {
+  width: 100%;
+  min-height: unset;
+}
+
+/* Paper-portrait thumbnails (A4-ish) */
+.project-thumb {
+  width: 100%;
+  aspect-ratio: 210 / 297;   /* A4 portrait ≈ 0.707:1 */
+  height: auto;              /* let aspect-ratio control height */
+  object-fit: cover;         /* crop to fill nicely; use 'contain' to avoid crop */
+  border-radius: 10px;
+}
+
+/* If your images are getting cropped too much, try this instead: */
+/* .project-thumb { object-fit: contain; background: rgba(255,255,255,0.04); } */
+
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+  .projects-drawer .project-list { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (max-width: 720px) {
+  .projects-drawer .project-list { grid-template-columns: 1fr; }
+}
+
+/* === HARD RESET: 2-column layout + center the projects box === */
+
+/* 1) The overlay itself: 2 columns, centered on page */
+.projects-overlay.open {
+  display: grid !important;
+  grid-template-columns: 340px minmax(0, 1fr) !important; /* left fixed, right flexible */
+  gap: 24px !important;
+  width: min(1280px, 96vw) !important;                     /* finite container width */
+  margin: 0 auto !important;                               /* center whole layout */
+}
+
+/* 2) Keep the LEFT column (categories) left-aligned */
+.projects-overlay .projects-grid {
+  justify-self: start !important;
+}
+
+/* 3) CENTER ONLY the projects drawer in the RIGHT column */
+#projects-drawer, .projects-drawer {
+  position: relative !important;    /* kill any absolute/fixed from earlier */
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+
+  width: min(960px, 100%) !important;
+  max-width: 960px !important;
+
+  justify-self: center !important;  /* center within right column */
+  margin-left: auto !important;     /* and ensure auto margins */
+  margin-right: auto !important;
+}
+
+/* keep your 3-up grid + portrait thumbs */
+.projects-drawer .project-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
+  gap: clamp(12px, 2vw, 20px) !important;
+  justify-items: stretch !important;
+}
+.project-item { width: 100% !important; }
+.project-thumb { aspect-ratio: 210 / 297; object-fit: cover; }
