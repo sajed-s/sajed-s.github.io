@@ -764,3 +764,85 @@ body {
 }
 .project-item { width: 100% !important; }
 .project-thumb { aspect-ratio: 210 / 297; object-fit: cover; }
+
+/* ===========================
+   MOBILE-ONLY TWEAKS
+   =========================== */
+
+/* <= 900px: overlays can scroll; Projects collapses to 1 column */
+@media (max-width: 900px) {
+  .projects-overlay.open,
+  .home-overlay.open {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Projects: 2 cols -> 1 col (categories above drawer) */
+  .projects-overlay.open {
+    grid-template-columns: 1fr;   /* collapse to single column */
+    width: 100%;
+    margin: 0;
+    padding: 18px;
+  }
+
+  /* Left stack spans full width and resets slide offset */
+  .projects-overlay .projects-grid {
+    max-width: none;
+    justify-self: stretch;
+    align-self: start;
+    transform: none;
+  }
+
+  /* Drawer goes full width; inner list controls scrolling */
+  .projects-drawer {
+    width: 100% !important;
+    max-width: none !important;
+    justify-self: stretch !important;
+    margin: 0 !important;
+    max-height: none;
+  }
+
+  /* 2-up grid on mid phones */
+  .projects-drawer .project-list {
+    grid-template-columns: repeat(2, minmax(140px, 1fr)) !important;
+    max-height: calc(100vh - 260px);
+  }
+}
+
+/* <= 560px: make top menu scrollable horizontally */
+@media (max-width: 560px) {
+  .top-menu {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 12px;
+  }
+  .top-menu .div-wrapper { flex: 0 0 auto; }
+}
+
+/* <= 520px: single-column projects + slightly squarer thumbs */
+@media (max-width: 520px) {
+  .projects-drawer .project-list {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .project-thumb {
+    aspect-ratio: 3 / 4;   /* was A4: 210/297 */
+    object-fit: cover;     /* use 'contain' if you prefer no crop */
+  }
+}
+
+/* Touch comfort: bigger tap targets */
+@media (hover: none) and (pointer: coarse) {
+  .project-item { padding: 18px; }
+  .projects-overlay .project-card { padding: 14px; }
+  .overlay-close, .drawer-close { width: 40px; height: 40px; }
+}
+
+/* Desktop guard (optional): ensure overlays behave like before on large screens */
+@media (min-width: 901px) {
+  .projects-overlay.open,
+  .home-overlay.open { overflow: visible; }
+}

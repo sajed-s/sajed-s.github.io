@@ -11,6 +11,7 @@ const camera = new THREE.PerspectiveCamera(
 scene.add(camera);
 
 const renderer  = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 const raycaster = new THREE.Raycaster();
 const mouse     = new THREE.Vector2();
 
@@ -134,7 +135,23 @@ function hideHomeOverlay(){
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
-function hideAllOverlays(){ hideProjectsOverlay(); hideHomeOverlay(); }
+function hideAllOverlays(){
+  hideProjectsOverlay();
+  hideHomeOverlay();
+  hideWorkOverlay();
+  hideContactOverlay();
+}
+
+
+function showContactOverlay(){
+  const el = document.getElementById("contact-overlay");
+  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
+}
+function hideContactOverlay(){
+  const el = document.getElementById("contact-overlay");
+  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
+}
+
 
 // ===================
 //  Top Menu Wiring
@@ -143,7 +160,7 @@ document.getElementById("home-button")?.addEventListener("click", (e) => {
   e.preventDefault();
 
   // Close any other overlay, open Home
-  hideProjectsOverlay();
+  hideAllOverlays();
   showHomeOverlay();
 
   // Camera return home
@@ -159,13 +176,21 @@ document.getElementById("home-button")?.addEventListener("click", (e) => {
 
 document.getElementById("projects-button")?.addEventListener("click", (e) => {
   e.preventDefault();
-  hideHomeOverlay();
+  hideAllOverlays();
   showProjectsOverlay();
 });
 
 // Optional close buttons if present
 document.getElementById("projects-close")?.addEventListener("click", hideProjectsOverlay);
 document.getElementById("home-close")?.addEventListener("click", hideHomeOverlay);
+
+
+document.getElementById("contact-button")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  hideAllOverlays();
+  showContactOverlay();
+});
+
 
 // ===================
 //  Animation Loop
@@ -246,6 +271,16 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+function showWorkOverlay(){
+  const el = document.getElementById("work-overlay");
+  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
+}
+function hideWorkOverlay(){
+  const el = document.getElementById("work-overlay");
+  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
+}
+document.getElementById("work-close")?.addEventListener("click", hideWorkOverlay);
+
 // ===================
 //  Events
 // ===================
@@ -253,6 +288,7 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 });
 
 window.addEventListener("mousemove", (e) => {
@@ -320,16 +356,45 @@ const CATEGORY_PROJECTS = {
       { title: "miRNA in breast cancer",                url: "https://www.frontiersin.org/journals/immunology/articles/10.3389/fimmu.2024.1333563/full",img: "mb.png" }
       
     ],
-  cv: [
-    "Self-driving car sensor fusion (LiDAR/Radar/Camera)",
-    "Nucleus-to-cytoplasm ratio in blood image",
-    "Kidney MRI analysis",
-    "Pose estimation on cattle"
-  ],
-  srs: [
-    "SPEXone georegistration",
-    "NH3 super-resolution"
-  ]
+cv: [
+  {
+    title: "Self-driving car sensor fusion",
+    img: "self_d.jpg",
+    desc: "Integrating LiDAR, radar, and camera data for robust perception in autonomous vehicles."
+  },
+  {
+    title: "Nucleus-to-cytoplasm ratio in blood images",
+    img: "blood.png",
+    desc: "Segmentation and quantitative analysis of blood cell images for diagnostic research."
+  },
+  {
+    title: "CT Scan Foreign Object detection",
+    img: "fro.png",
+    desc: "Machine learning approach for segmentation multiple dual energy objects from CT scan."
+  },
+  {
+    title: "Pose estimation on cattle",
+    img: "pos.mp4",
+    desc: "Computer vision pipeline for detecting and estimating cattle body poses from camera data."
+  },
+    {
+    title: "Computer Vision for Zebrafish Tracking",
+    img: "traking.mp4",
+    desc: "Computer vision pipeline for Zebrafish Tracking."
+  }
+],
+srs: [
+  {
+    title: "SPEXone georegistration",
+    img: "spex.png",             // put an image with this name next to index.html
+    desc: "Georegistration of SPEX airborne data using keypoint registration."
+  },
+  {
+    title: "NH₃ super-resolution",
+    img: "thesis.png",                 // put an image with this name next to index.html
+    desc: "Predicting NH₃ at higher resolution from CH₄ and NO₂."
+  }
+]
 };
 
 function openProjectsDrawer(categoryKey){
@@ -354,30 +419,37 @@ function openProjectsDrawer(categoryKey){
     const name  = isObj ? entry.title : String(entry);
     const url   = isObj ? entry.url   : null;
     const img   = isObj ? entry.img   : "";
+    const desc  = isObj ? (entry.desc || entry.description || "") : "";
 
     const card = document.createElement('article');
     card.className = 'project-item';
     card.setAttribute('role', 'listitem');
 
-    const imageHTML = `<img class="project-thumb" src="${img || ''}" alt="${name}">`;
+    let imageHTML = "";
+    if (img && (img.endsWith(".mp4") || img.endsWith(".webm"))) {
+      imageHTML = `<video class="project-thumb" src="${img}" autoplay loop muted playsinline></video>`;
+    } else {
+      imageHTML = `<img class="project-thumb" src="${img || ''}" alt="${name}">`;
+    }
+
+    let inner = `${imageHTML}
+                <h4>${name}</h4>
+                ${desc ? `<p class="desc">${desc}</p>` : ''}`;
 
     if (url) {
-      card.innerHTML = `
-        <a class="project-link" href="${url}" target="_blank" rel="noopener noreferrer" aria-label="${name} (opens in new tab)">
-          ${imageHTML}
-          <h4>${name}</h4>
+      card.innerHTML =
+        `<a class="project-link" href="${url}" target="_blank" rel="noopener noreferrer" aria-label="${name} (opens in new tab)">
+          ${inner}
           <div class="meta">Open link</div>
         </a>`;
       card.querySelector('a').addEventListener('click', e => e.stopPropagation());
     } else {
-      card.innerHTML = `
-        ${imageHTML}
-        <h4>${name}</h4>
-        <div class="meta">Hover highlights • Click to expand (soon)</div>`;
+      card.innerHTML = `${inner}<div class="meta"></div>`;
     }
 
     list.appendChild(card);
   });
+
 
   // Reveal right column and slide categories left
   overlay.classList.add('shifted');
@@ -405,6 +477,10 @@ function closeProjectsDrawer(){
   if (overlay) overlay.classList.remove('shifted');  // back to centered state
 }
 
+function hideWorkOverlay(){
+  const el = document.getElementById("work-overlay");
+  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
+}
 
 // Close drawer with the X (if present)
 document.getElementById('drawer-close')?.addEventListener('click', closeProjectsDrawer);
@@ -416,6 +492,12 @@ document.getElementById('projects-overlay')?.addEventListener('click', (e) => {
   const clickedInsideDrawer = drawer.contains(e.target);
   const clickedCard = e.target.closest && e.target.closest('.project-card');
   if (!clickedInsideDrawer && !clickedCard) closeProjectsDrawer();
+});
+
+document.getElementById("work-button")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  hideAllOverlays();
+  showWorkOverlay();
 });
 
 // Bind category cards -> open drawer with that category
