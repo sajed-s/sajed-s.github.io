@@ -182,3 +182,33 @@ a {
   background: #5494e8;
   transform: translateY(-2px);
 }
+/* Keep the top menu ALWAYS clickable and above everything */
+.top-menu {
+  z-index: 2000;        /* higher than overlays and the CSS2D label layer */
+  pointer-events: auto; /* ensure it accepts clicks */
+}
+
+/* Your CSS2DRenderer layer should not eat clicks */
+.label-layer {
+  z-index: 100;         /* below the menu, above the WebGL canvas */
+  pointer-events: none; /* labels themselves re-enable via pointer-events:auto */
+}
+
+/* Make overlays sit BELOW the top menu */
+.projects-overlay,
+.home-overlay,
+.work-overlay,
+.contact-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;         /* lower than .top-menu’s 2000 */
+  /* keep pointer-events default (auto) so overlay content is still clickable */
+}
+
+/* If you have any full-screen background/cover elements inside overlays, keep them below the menu too */
+.projects-overlay::before,
+.home-overlay::before,
+.work-overlay::before,
+.contact-overlay::before {
+  z-index: 0;
+}

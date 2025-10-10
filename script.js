@@ -46,8 +46,20 @@ let satellite = null;
 
 
 
-const moonIndexToZoom  = 3;
+let currentMoonIndex = 3;                       // default if you want one pre-picked
+const SECTION_TO_MOON = { projects: 0, work: 1, contact: 2 };
+const MOON_TO_SECTION = { 0: "projects", 1: "work", 2: "contact" };
 
+// Open the requested overlay (and close others)
+function openSection(section) {
+  hideAllOverlays();
+  switch (section) {
+    case "projects": showProjectsOverlay?.(); break;
+    case "work":     showWorkOverlay?.();     break;
+    case "contact":  showContactOverlay?.();  break;
+    case "home":     showHomeOverlay?.();     break;
+  }
+}
 const targetPosition   = new THREE.Vector3(0, 0.5, 3.7); // for star zoom
 
 // ===================
@@ -99,9 +111,50 @@ for (let i = 0; i < moonCount; i++) {
     radius: 5 + i * 1.5,
     speed:  0.001 + i * 0.0005
   };
+    // Tag specific moons so clicks can find their section
+  if (moons[0]) moons[0].userData.section = "projects";
+  if (moons[1]) moons[1].userData.section = "work";
+  if (moons[2]) moons[2].userData.section = "contact";
+
   moons.push(moon);
   scene.add(moon);
 }
+
+
+// SUN → "Home"
+attachLabelToObject(sphere, "Home", () => {
+  openSection("home");
+  focusOnMoon = false;
+  focusOnStar = false;
+  focusHome   = true;  // smoothly return to initial camera/target
+  if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
+}, /*yOffset=*/1.2);
+
+// Moon 0 → Projects
+if (moons[0]) {
+  attachLabelToObject(moons[0], "Projects", () => {
+    openSection("projects");
+    focusCameraOnMoon(0);
+  });
+}
+
+// Moon 1 → Work
+if (moons[1]) {
+  attachLabelToObject(moons[1], "Work", () => {
+    openSection("work");
+    focusCameraOnMoon(1);
+  });
+}
+
+// Moon 2 → Get in Touch
+if (moons[2]) {
+  attachLabelToObject(moons[2], "Get in Touch", () => {
+    openSection("contact");
+    focusCameraOnMoon(2);
+  });
+}
+
+
 
 // ===================
 //  Camera & Controls
@@ -116,6 +169,16 @@ controls.enablePan = false;
 const homeCamPos    = camera.position.clone();
 const homeCamTarget = controls.target.clone();
 
+
+const labelRenderer = new THREE.CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.className = "label-layer";
+document.body.appendChild(labelRenderer.domElement);
+
+// Keep both renderers in sync on resize
+window.addEventListener("resize", () => {
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
 // ===================
 //  Overlay Helpers (safe no-ops if elements are missing)
 // ===================
@@ -142,6 +205,54 @@ function hideAllOverlays(){
   hideContactOverlay();
 }
 
+
+function attachLabelToObject(object3D, text, onClick, yOffset = 0.6) {
+  const el = document.createElement("div");
+  el.className = "space-label";
+  el.textContent = text;
+  // allow clicks to pass through the layer but not the label
+  el.style.pointerEvents = "auto";
+
+  const labelObj = new THREE.CSS2DObject(el);
+  labelObj.position.set(0, yOffset, 0); // float the tab slightly above the body
+  object3D.add(labelObj);
+
+  if (typeof onClick === "function") {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    });
+  }
+  return labelObj;
+}
+
+
+function focusCameraOnMoon(index) {
+  if (!moons[index]) return;
+  currentMoonIndex = index;
+  focusOnMoon = true;
+  focusOnStar = false;
+  focusHome   = false;
+
+  // (Optional satellite loader preserved)
+  if (!satellite) {
+    const gltfLoader  = new THREE.GLTFLoader();
+    const dracoLoader = new THREE.DRACOLoader();
+    dracoLoader.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/libs/draco/");
+    gltfLoader.setDRACOLoader(dracoLoader);
+
+    gltfLoader.load("satellite.glb", (gltf) => {
+      satellite = gltf.scene;
+      satellite.scale.set(0.2, 0.2, 0.2);
+      camera.add(satellite);
+      satellite.position.set(-2, 0, -3);
+      satellite.visible = true;
+    }, undefined, err => console.error(err));
+  } else {
+    satellite.visible = true;
+  }
+}
 
 function showContactOverlay(){
   const el = document.getElementById("contact-overlay");
@@ -178,6 +289,7 @@ document.getElementById("projects-button")?.addEventListener("click", (e) => {
   e.preventDefault();
   hideAllOverlays();
   showProjectsOverlay();
+  focusCameraOnMoon(SECTION_TO_MOON.projects);
 });
 
 // Optional close buttons if present
@@ -189,8 +301,15 @@ document.getElementById("contact-button")?.addEventListener("click", (e) => {
   e.preventDefault();
   hideAllOverlays();
   showContactOverlay();
+  focusCameraOnMoon(SECTION_TO_MOON.contact);
 });
 
+document.getElementById("work-button")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  hideAllOverlays();
+  showWorkOverlay();
+  focusCameraOnMoon(SECTION_TO_MOON.work);
+});
 
 // ===================
 //  Animation Loop
@@ -241,8 +360,8 @@ function animate() {
   }
 
   // Follow the 4th moon when focused
-  if (focusOnMoon) {
-    const moonPos = moons[moonIndexToZoom].position;
+  if (focusOnMoon && moons[currentMoonIndex]) {
+    const moonPos = moons[currentMoonIndex].position;
     const desiredCam = moonPos.clone().add(new THREE.Vector3(0, 0.5, 1.5));
     camera.position.lerp(desiredCam, 0.05);
     controls.target.lerp(moonPos, 0.05);
@@ -269,6 +388,14 @@ function animate() {
   }
 
   renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+function goHomeAndClear() {
+  hideAllOverlays();
+  focusOnMoon = false;
+  focusOnStar = false;
+  focusHome   = true;
+  if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
 }
 
 function showWorkOverlay(){
@@ -290,7 +417,9 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 });
-
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") goHomeAndClear();
+});
 window.addEventListener("mousemove", (e) => {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -299,51 +428,40 @@ window.addEventListener("mousemove", (e) => {
 window.addEventListener("click", () => {
   raycaster.setFromCamera(mouse, camera);
 
-  // 1) Prefer the 4th moon
-  const moonHits = raycaster.intersectObject(moons[moonIndexToZoom]);
-  if (moonHits.length > 0) {
-    focusOnMoon = true;
-    focusOnStar = false;
-    
-
-    const hdr = document.querySelector(".header");
-    if (hdr) hdr.style.display = "none";
-
-    // Smooth-zoom target above the moon
-    moonTargetPosition.copy(moons[moonIndexToZoom].position)
-                      .add(new THREE.Vector3(0, 0.5, 1.5));
-
-    // Lazy-load a satellite once (optional)
-    if (!satellite) {
-      const gltfLoader  = new THREE.GLTFLoader();
-      const dracoLoader = new THREE.DRACOLoader();
-      dracoLoader.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/libs/draco/");
-      gltfLoader.setDRACOLoader(dracoLoader);
-
-      gltfLoader.load("satellite.glb", (gltf) => {
-        satellite = gltf.scene;
-        satellite.scale.set(0.2, 0.2, 0.2);
-        camera.add(satellite);
-        satellite.position.set(-2, 0, -3);
-        satellite.visible = true;
-      }, undefined, err => console.error(err));
-    } else {
-      satellite.visible = true;
-    }
-
-    return; // don't process the sun in this click
-  }
-
-  // 2) Sun click — OLD UI disabled (no typewriter/header)
-  const sunHits = raycaster.intersectObject(sphere);
+  // 1) Sun → Home overlay + return home
+  const sunHits = raycaster.intersectObject(sphere, false);
   if (sunHits.length > 0) {
-    // If you want gentle zoom on the sun, uncomment:
-    // focusOnStar = true;
-
-    // Ensure overlays don't pop in from legacy code
-    hideAllOverlays();
+    openSection("home");
+    focusOnMoon = false;
+    focusOnStar = false;
+    focusHome   = true;
+    if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
+    return;
   }
+
+  // 2) Moons → open the mapped overlay + fly camera
+  const moonHits = raycaster.intersectObjects(moons, false);
+  if (moonHits.length > 0) {
+    const hit = moonHits[0].object;
+    const idx = moons.indexOf(hit);
+    if (idx !== -1) {
+      // Move the camera
+      focusCameraOnMoon(idx);
+      // Open the correct overlay if mapped/tagged
+      const section = MOON_TO_SECTION[idx] || hit.userData.section;
+      if (section) {
+        openSection(section);
+      } else {
+        hideAllOverlays(); // fallback: no mapping
+      }
+    }
+    return;
+  }
+
+  // Optional: click empty space does nothing or closes overlays
+  // hideAllOverlays();
 });
+
 
 // ===== Category Projects Data & Drawer Logic =====
 const CATEGORY_PROJECTS = {
@@ -494,11 +612,6 @@ document.getElementById('projects-overlay')?.addEventListener('click', (e) => {
   if (!clickedInsideDrawer && !clickedCard) closeProjectsDrawer();
 });
 
-document.getElementById("work-button")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  hideAllOverlays();
-  showWorkOverlay();
-});
 
 // Bind category cards -> open drawer with that category
 document.querySelectorAll('.project-card').forEach(card => {
