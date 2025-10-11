@@ -8,6 +8,8 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
+camera.up.set(0, 1, 0.25);             // Z is "up" for this view
+camera.position.set(0, 25, 0.5);  
 
 // === Adjust camera for mobile (less zoom) ===
 if (window.innerWidth < 720) {
@@ -67,8 +69,8 @@ let introActive = true;
 const intro = {
   t: 0,
   duration: 9,                               // seconds
-  startPos: new THREE.Vector3(0, 6, 355),       // starting camera position
-  startTarget: new THREE.Vector3(0, 0, 0)      // starting look-at target
+  startPos: new THREE.Vector3(0, 6, 305),       // starting camera position
+  startTarget: new THREE.Vector3(0, 1, 0.25)      // starting look-at target
 };
 // ease helper
 function easeInOutCubic(x){ return x<0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; }
@@ -83,9 +85,14 @@ function openSection(section) {
     case "home":     showHomeOverlay?.();     break;
   }
 }
-const targetPosition = new THREE.Vector3(0, 0.5, 3.7); // for star zoom
+const targetPosition = new THREE.Vector3(0, 25, 0.5); // for star zoom
 const loader = new THREE.TextureLoader();
 
+
+/////
+
+
+/////
 // ===================
 //  Background Space (procedural) + Sun
 // ===================
@@ -151,8 +158,8 @@ function makeCrispStarTexture(hex, size = 16) {
 
 const starTexWhite        = makeStarTexture(0xffffff, 1.0);
 const starTexCyan         = makeStarTexture(0x00ffff, 1.0);
-const starTexRedSharp     = makeCrispStarTexture(0xff5544, 10);   // FIXED: use crisp
-const starTexOrangeSharp  = makeCrispStarTexture(0xffaa33, 10);   // FIXED: use crisp
+const starTexRedSharp     = makeStarTexture(0xff5544, 5);   // FIXED: use crisp
+const starTexOrangeSharp  = makeStarTexture(0xffaa33, 5);   // FIXED: use crisp
 
 // --- Twinkle shader material ---
 function makeTwinklePointsMaterial(texture, {
@@ -532,6 +539,67 @@ function hideAllOverlays(){
   hideContactOverlay();
 }
 
+
+//////
+// ===================
+//  Orbit Rings (visualize moon paths)
+// ===================
+function addOrbitRing(radius, color = 0x00d9c0, thickness = 0.025, glow = 0.22) {
+  const group = new THREE.Group();
+
+  // 1) Crisp thin ring (the line)
+  const ringThinGeo = new THREE.RingGeometry(
+    Math.max(0.001, radius - thickness),
+    radius + thickness,
+    128
+  );
+  const ringThinMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.55,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const ringThin = new THREE.Mesh(ringThinGeo, ringThinMat);
+  ringThin.rotation.x = Math.PI / 2; // put it in the x–z plane (y = 0)
+  group.add(ringThin);
+
+  // 2) Soft halo for a subtle glow
+  const ringGlowGeo = new THREE.RingGeometry(
+    Math.max(0.001, radius - thickness * 6),
+    radius + thickness * 6,
+    128
+  );
+  const ringGlowMat = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: glow,               // soft
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const ringGlow = new THREE.Mesh(ringGlowGeo, ringGlowMat);
+  ringGlow.rotation.x = Math.PI / 2;
+  group.add(ringGlow);
+
+  // Render a bit before other transparent stuff, and never occlude
+  group.children.forEach(m => { m.renderOrder = 1; m.frustumCulled = false; });
+
+  scene.add(group);
+  return group;
+}
+
+const ORBIT_COLOR = 0xe5d352;
+// Create one ring per moon radius (matches your radii: 5, 6.5, 8, 9.5, 11)
+const orbitRings = [];
+moons.forEach(moon => {
+  const r = moon.userData.radius;
+  orbitRings.push(addOrbitRing(r, ORBIT_COLOR, 0.025, 0.18));
+});
+
+
+//////
 // ===================
 //  Focus helpers
 // ===================
@@ -789,8 +857,8 @@ const CATEGORY_PROJECTS = {
     { title: "Computer Vision for Zebrafish Tracking", img: "traking.mp4", desc: "Computer vision pipeline for Zebrafish Tracking." }
   ],
   srs: [
-    { title: "SPEXone georegistration", img: "spex.png", desc: "Georegistration of SPEX airborne data using keypoint registration." },
-    { title: "NH₃ super-resolution", img: "thesis.png", desc: "Predicting NH₃ at higher resolution from CH₄ and NO₂." }
+    { title: "SPEXone georegistration", img: "spex_1.png", desc: "Georegistration of SPEX airborne data using keypoint registration." },
+    { title: "NH₃ super-resolution", img: "thesis_1.png", desc: "Predicting NH₃ at higher resolution from CH₄ and NO₂." }
   ]
 };
 
