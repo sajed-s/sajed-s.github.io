@@ -1,4 +1,3 @@
-
 // ===================
 //  Three.js Scene
 // ===================
@@ -23,6 +22,12 @@ const renderer  = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+const BLOOM_LAYER = 1;
+const ENTIRE_SCENE = 0;
+const darkMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const materialsCache = {};
+
 
 // keep the canvas behind UI
 renderer.domElement.style.position = "fixed";
@@ -57,6 +62,17 @@ let currentMoonIndex = 3; // default if you want one pre-picked
 const SECTION_TO_MOON = { projects: 0, work: 1, contact: 2 };
 const MOON_TO_SECTION = { 0: "projects", 1: "work", 2: "contact" };
 
+// --- INTRO DOLLY: camera starts far and glides to "home" ---
+let introActive = true;
+const intro = {
+  t: 0,
+  duration: 9,                               // seconds
+  startPos: new THREE.Vector3(0, 6, 355),       // starting camera position
+  startTarget: new THREE.Vector3(0, 0, 0)      // starting look-at target
+};
+// ease helper
+function easeInOutCubic(x){ return x<0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; }
+
 // Open the requested overlay (and close others)
 function openSection(section) {
   hideAllOverlays();
@@ -68,30 +84,291 @@ function openSection(section) {
   }
 }
 const targetPosition = new THREE.Vector3(0, 0.5, 3.7); // for star zoom
-
-// ===================
-//  Background Sky + Sun
-// ===================
 const loader = new THREE.TextureLoader();
 
-// Star field (inside-out sphere)
-const starTexture = loader.load("stars.jpg");
-const skyGeo = new THREE.SphereGeometry(100, 64, 64);
-const skyMat = new THREE.MeshBasicMaterial({ map: starTexture, side: THREE.BackSide, depthWrite: false });
-const sky = new THREE.Mesh(skyGeo, skyMat);
-scene.add(sky);
+// ===================
+//  Background Space (procedural) + Sun
+// ===================
 
-// Sun
-const sunTexture = loader.load("8k_sun.jpg");
+
+// 1) Use a deep space color as the renderer background
+renderer.setClearColor(0x071122, 1); // dark blue
+
+// 2) Star sprite generators (CanvasTexture)
+function makeStarTexture(hex, innerAlpha = 0.8) {
+  const size = 32;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+
+  const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0.00, `rgba(${r},${g},${b},${innerAlpha})`);
+  grad.addColorStop(0.22, `rgba(${r},${g},${b},0.22)`);
+  grad.addColorStop(1.00, `rgba(0,0,0,0)`);
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+  ctx.fill();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+// CRISP star: white-hot core + thin colored rim
+function makeCrispStarTexture(hex, size = 16) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+
+  const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
+  const cx = size / 2, cy = size / 2;
+
+  ctx.clearRect(0, 0, size, size);
+
+  const core = Math.max(1, Math.floor(size * 0.22));
+  ctx.fillStyle = 'rgba(255,255,255,1)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, core, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = `rgba(${r},${g},${b},1)`;
+  ctx.lineWidth = Math.max(1, Math.round(size * 0.06));
+  ctx.beginPath();
+  ctx.arc(cx, cy, core + ctx.lineWidth * 0.6, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+const starTexWhite        = makeStarTexture(0xffffff, 1.0);
+const starTexCyan         = makeStarTexture(0x00ffff, 1.0);
+const starTexRedSharp     = makeCrispStarTexture(0xff5544, 10);   // FIXED: use crisp
+const starTexOrangeSharp  = makeCrispStarTexture(0xffaa33, 10);   // FIXED: use crisp
+
+// --- Twinkle shader material ---
+function makeTwinklePointsMaterial(texture, {
+  baseSize = 6,
+  opacity = 0.75,
+  additive = true,
+  pixelRatio = window.devicePixelRatio || 1
+} = {}) {
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uMap: { value: texture },
+      uOpacity: { value: opacity },
+      uBaseSize: { value: baseSize },
+      uPixelRatio: { value: pixelRatio }
+    },
+    vertexShader: /* glsl */`
+      uniform float uTime;
+      uniform float uBaseSize;
+      uniform float uPixelRatio;
+
+      attribute float aSizeJitter; // -0.3..+0.3
+      attribute float aTwinkle;    // 0 or 1
+      attribute float aSpeed;      // 0.6..1.8
+      attribute float aPhase;      // 0..2PI
+      attribute float aOpacity;    // 0.5..1.0
+
+      varying float vOpacity;
+
+      void main() {
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+
+        float tw = 1.0;
+        if (aTwinkle > 0.0) {
+          float s = sin(uTime * aSpeed + aPhase) * 0.5 + 0.5; // 0..1
+          s = pow(s, 2.0); // linger darker, quick bright flash
+          tw = mix(0.8, 1.5, s);
+        }
+
+        float size = uBaseSize * (1.0 + aSizeJitter) * tw;
+
+        // simple size attenuation; adjust constant for your camera/FOV
+        float atten = 300.0 / -mvPosition.z;
+        gl_PointSize = size * atten * uPixelRatio;
+
+        vOpacity = aOpacity;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: /* glsl */`
+      uniform sampler2D uMap;
+      uniform float uOpacity;
+
+      varying float vOpacity;
+
+      void main() {
+        vec2 uv = gl_PointCoord;
+        vec4 tex = texture2D(uMap, uv);
+        vec3 rgb = tex.rgb * tex.a;          // premultiplied look
+        gl_FragColor = vec4(rgb, tex.a * uOpacity * vOpacity);
+        if (gl_FragColor.a < 0.02) discard;  // remove square edges
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending
+  });
+  mat.uniforms.uMap.value.colorSpace = THREE.SRGBColorSpace;
+  return mat;
+}
+
+// 3) Build star layers (with twinkle attributes)
+function makeStars({
+  count,
+  minR = 30,
+  maxR = 90,
+  sizePx = 4,
+  texture,
+  opacity = 0.75,
+  additive = true,
+  twinkleRatio = 0.25 // only this fraction will blink
+}) {
+  const geom = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  const aSizeJitter = new Float32Array(count);
+  const aTwinkle = new Float32Array(count);
+  const aSpeed = new Float32Array(count);
+  const aPhase = new Float32Array(count);
+  const aOpacity = new Float32Array(count);
+
+  for (let i = 0; i < count; i++) {
+    const u = Math.random() * 2 * Math.PI;
+    const v = Math.acos(2 * Math.random() - 1);
+    const r = minR + Math.random() * (maxR - minR);
+    const x = r * Math.sin(v) * Math.cos(u);
+    const y = r * Math.sin(v) * Math.sin(u);
+    const z = r * Math.cos(v);
+    const idx = i * 3;
+    pos[idx] = x; pos[idx + 1] = y; pos[idx + 2] = z;
+
+    aSizeJitter[i] = (Math.random() * 0.6) - 0.3; // -0.3..+0.3
+    const willTwinkle = Math.random() < twinkleRatio ? 1 : 0;
+    aTwinkle[i] = willTwinkle;
+    aSpeed[i] = willTwinkle ? (0.6 + Math.random() * 1.2) : 0.0;
+    aPhase[i] = Math.random() * Math.PI * 2.0;
+    aOpacity[i] = 0.5 + Math.random() * 0.5;
+  }
+
+  geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geom.setAttribute('aSizeJitter', new THREE.BufferAttribute(aSizeJitter, 1));
+  geom.setAttribute('aTwinkle', new THREE.BufferAttribute(aTwinkle, 1));
+  geom.setAttribute('aSpeed', new THREE.BufferAttribute(aSpeed, 1));
+  geom.setAttribute('aPhase', new THREE.BufferAttribute(aPhase, 1));
+  geom.setAttribute('aOpacity', new THREE.BufferAttribute(aOpacity, 1));
+
+  const mat = makeTwinklePointsMaterial(texture, {
+    baseSize: sizePx,
+    opacity,
+    additive,
+    pixelRatio: window.devicePixelRatio || 1
+  });
+
+  const points = new THREE.Points(geom, mat);
+  points.userData.isTwinklePoints = true; // tag for uTime updates
+  return points;
+}
+
+// Cheap + pretty halo layer to enhance glow
+function makeHaloLayer(points, texture, scale = 1.5, extraOpacity = 0.35) {
+  const halo = points.clone();
+  halo.geometry = points.geometry; // share
+  const base = points.material.uniforms.uBaseSize.value;
+  const op   = points.material.uniforms.uOpacity.value;
+
+  halo.material = makeTwinklePointsMaterial(texture, {
+    baseSize: base * scale,
+    opacity: Math.min(1, op * extraOpacity),
+    additive: true
+  });
+  halo.userData.isTwinklePoints = true;
+  return halo;
+}
+
+const starfieldGroup = new THREE.Group();
+scene.add(starfieldGroup);
+
+const IS_MOBILE = window.innerWidth < 720;
+
+// fewer points
+const WHITE_COUNT  = IS_MOBILE ? 600 : 1000;
+const CYAN_COUNT   = IS_MOBILE ? 120 : 200;
+const RED_COUNT    = IS_MOBILE ? 25  : 50;
+const ORANGE_COUNT = IS_MOBILE ? 30  : 60;
+
+// Stars
+const starsWhite = makeStars({
+  count: WHITE_COUNT,
+  minR: 40, maxR: 250,
+  sizePx: 10,
+  texture: starTexWhite,
+  opacity: 0.8,
+  additive: true
+});
+const starsCyan = makeStars({
+  count: CYAN_COUNT,
+  minR: 10, maxR: 180,
+  sizePx: 8,
+  texture: starTexCyan,
+  opacity: 0.65,
+  additive: true
+});
+const starsRed = makeStars({
+  count: RED_COUNT,
+  minR: 10, maxR: 50,
+  sizePx: 2,                 // smaller
+  texture: starTexRedSharp,
+  opacity: 0.55,
+  additive: true,
+  twinkleRatio: 0.18
+});
+
+const starsOrange = makeStars({
+  count: ORANGE_COUNT,
+  minR: 10, maxR: 50,
+  sizePx: 2,                 // smaller
+  texture: starTexOrangeSharp,
+  opacity: 0.65,
+  additive: true,
+  twinkleRatio: 0.18
+});
+
+starfieldGroup.add(starsCyan, starsWhite, starsRed, starsOrange);
+
+// Halo layers (fast glow)
+const haloWhite  = makeHaloLayer(starsWhite,  starTexWhite,        2.2, 0.32);
+const haloCyan   = makeHaloLayer(starsCyan,   starTexCyan,         2.2, 0.28);
+const haloRed    = makeHaloLayer(starsRed,    starTexRedSharp,     2.1, 0.26);
+const haloOrange = makeHaloLayer(starsOrange, starTexOrangeSharp,  2.1, 0.30);
+starfieldGroup.add(haloWhite, haloCyan, haloRed, haloOrange);
+
+// Optional: gentle drift/rotation
+const _starSpin = { y: 0.00015, x: 0.00003 };
+
+// ---- Sun ----
 const sunGeo = new THREE.SphereGeometry(2, 64, 64);
 const sunMat = new THREE.MeshStandardMaterial({
-  map: sunTexture,
-  emissive: 0xffcc33,
-  emissiveIntensity: 0.5,
+  color: 0xffcc33,
+  emissive: 0x775500,
+  emissiveIntensity: 0.35,
   metalness: 0,
   roughness: 1
 });
 const sphere = new THREE.Mesh(sunGeo, sunMat);
+// (Optional texture)
+// const sunTexture = loader.load("8k_sun.jpg", t => { t.colorSpace = THREE.SRGBColorSpace; sunMat.map = t; sunMat.needsUpdate = true; });
 scene.add(sphere);
 
 // ===================
@@ -118,7 +395,6 @@ for (let i = 0; i < moonCount; i++) {
     radius: 5 + i * 1.5,
     speed:  0.001 + i * 0.0005
   };
-  // tag first three moons to sections
   if (i === 0) moon.userData.section = "projects";
   if (i === 1) moon.userData.section = "work";
   if (i === 2) moon.userData.section = "contact";
@@ -134,7 +410,7 @@ function attachLabelToObject(object3D, text, onClick, yOffset = 0.6) {
   const el = document.createElement("div");
   el.className = "space-label";
   el.textContent = text;
-  el.style.pointerEvents = "auto"; // allow clicks
+  el.style.pointerEvents = "auto";
 
   const labelObj = new THREE.CSS2DObject(el);
   labelObj.position.set(0, yOffset, 0);
@@ -157,7 +433,7 @@ attachLabelToObject(sphere, "Home", () => {
   focusOnStar = false;
   focusHome   = true;
   if (satellite) satellite.visible = false;
-}, /*yOffset=*/1.2);
+}, 1.2);
 
 // Moon 0 → Projects
 if (moons[0]) {
@@ -166,7 +442,6 @@ if (moons[0]) {
     focusCameraOnMoon(0);
   });
 }
-
 // Moon 1 → Work
 if (moons[1]) {
   attachLabelToObject(moons[1], "Work", () => {
@@ -174,7 +449,6 @@ if (moons[1]) {
     focusCameraOnMoon(1);
   });
 }
-
 // Moon 2 → Get in Touch
 if (moons[2]) {
   attachLabelToObject(moons[2], "Get in Touch", () => {
@@ -196,6 +470,12 @@ controls.enablePan = false;
 const homeCamPos    = camera.position.clone();
 const homeCamTarget = controls.target.clone();
 
+// --- INTRO DOLLY: place camera at intro start & lock controls ---
+camera.position.copy(intro.startPos);
+controls.target.copy(intro.startTarget);
+controls.enabled = false;
+controls.update();
+
 // Label renderer
 const labelRenderer = new THREE.CSS2DRenderer();
 labelRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -203,7 +483,7 @@ labelRenderer.domElement.className = "label-layer";
 labelRenderer.domElement.style.position = "fixed";
 labelRenderer.domElement.style.top = "0";
 labelRenderer.domElement.style.left = "0";
-labelRenderer.domElement.style.zIndex = "1"; // above canvas, below overlays
+labelRenderer.domElement.style.zIndex = "1";
 document.body.appendChild(labelRenderer.domElement);
 
 // ===================
@@ -214,14 +494,13 @@ function showProjectsOverlay(){
   if (el) {
     el.classList.add("open");
     el.setAttribute("aria-hidden", "false");
-    el.classList.remove("shifted"); // initial centered state
+    el.classList.remove("shifted");
   }
 }
 function hideProjectsOverlay(){
   const el = document.getElementById("projects-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
-
 function showHomeOverlay(){
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
@@ -230,7 +509,6 @@ function hideHomeOverlay(){
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
-
 function showWorkOverlay(){
   const el = document.getElementById("work-overlay");
   if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
@@ -239,7 +517,6 @@ function hideWorkOverlay(){
   const el = document.getElementById("work-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
-
 function showContactOverlay(){
   const el = document.getElementById("contact-overlay");
   if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
@@ -248,7 +525,6 @@ function hideContactOverlay(){
   const el = document.getElementById("contact-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
-
 function hideAllOverlays(){
   hideProjectsOverlay();
   hideHomeOverlay();
@@ -266,7 +542,6 @@ function focusCameraOnMoon(index) {
   focusOnStar = false;
   focusHome   = false;
 
-  // optional satellite loader
   if (!satellite) {
     const gltfLoader  = new THREE.GLTFLoader();
     const dracoLoader = new THREE.DRACOLoader();
@@ -332,8 +607,41 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
 
+  // --- INTRO DOLLY: run once on load, then stop ---
+  if (introActive) {
+    intro.t = Math.min(1, intro.t + (1 / (intro.duration * 60))); // progress 0..1
+    const k = easeInOutCubic(intro.t);
+
+    const camPos = new THREE.Vector3().copy(intro.startPos).lerp(homeCamPos, k);
+    const camTgt = new THREE.Vector3().copy(intro.startTarget).lerp(homeCamTarget, k);
+
+    camera.position.copy(camPos);
+    controls.target.copy(camTgt);
+    controls.update();
+
+    if (intro.t >= 1) {
+      camera.position.copy(homeCamPos);
+      controls.target.copy(homeCamTarget);
+      controls.enabled = true;   // hand back control
+      controls.update();
+      introActive = false;
+    }
+  }
+
+  // Update twinkle time uniform on all star materials
+  const t = performance.now() * 0.001;
+  starfieldGroup.traverse((obj) => {
+    if (obj.isPoints && obj.userData.isTwinklePoints && obj.material && obj.material.uniforms?.uTime) {
+      obj.material.uniforms.uTime.value = t;
+    }
+  });
+
   // Rotate sun
   sphere.rotation.y += 0.001;
+
+  // Drift stars
+  starfieldGroup.rotation.y += _starSpin.y;
+  starfieldGroup.rotation.x += _starSpin.x;
 
   // Orbit moons
   moons.forEach(moon => {
@@ -347,7 +655,6 @@ function animate() {
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects([sphere, ...moons]);
 
-  // Clear previous highlight when leaving
   if (hoveredObject && !hits.find(i => i.object === hoveredObject)) {
     hoveredObject.scale.set(1, 1, 1);
     if (hoveredObject.material && hoveredObject.material.emissive) {
@@ -373,8 +680,8 @@ function animate() {
     }
   }
 
-  // Follow the selected moon when focused
-  if (focusOnMoon && moons[currentMoonIndex]) {
+  // Follow the selected moon when focused (skip during intro)
+  if (!introActive && focusOnMoon && moons[currentMoonIndex]) {
     const moonPos = moons[currentMoonIndex].position;
     const desiredCam = moonPos.clone().add(new THREE.Vector3(0, 0.5, 1.5));
     camera.position.lerp(desiredCam, 0.05);
@@ -383,13 +690,13 @@ function animate() {
   }
 
   // Optional zoom-in on star
-  if (focusOnStar) {
+  if (!introActive && focusOnStar) {
     camera.position.lerp(targetPosition, 0.01);
     camera.lookAt(0, 3, 0);
   }
 
   // Smooth return home
-  if (focusHome) {
+  if (!introActive && focusHome) {
     camera.position.lerp(homeCamPos, 0.05);
     controls.target.lerp(homeCamTarget, 0.05);
     controls.update();
@@ -463,7 +770,7 @@ window.addEventListener("click", () => {
 });
 
 // ===================
-//  Projects Data (used for both desktop drawer and mobile panels)
+//  Projects Data
 // ===================
 const CATEGORY_PROJECTS = {
   bioinformatics: [
@@ -488,7 +795,7 @@ const CATEGORY_PROJECTS = {
 };
 
 // ===================
-//  Desktop Drawer (unchanged for desktop)
+//  Desktop Drawer
 // ===================
 function openProjectsDrawer(categoryKey){
   const overlay = document.getElementById('projects-overlay');
@@ -504,7 +811,6 @@ function openProjectsDrawer(categoryKey){
   };
   title.textContent = titleMap[categoryKey] || 'Projects';
 
-  // Build list
   list.innerHTML = '';
   const items = CATEGORY_PROJECTS[categoryKey] || [];
   items.forEach(entry => {
@@ -559,7 +865,7 @@ function closeProjectsDrawer(){
 // Close drawer with the X (if present)
 document.getElementById('drawer-close')?.addEventListener('click', closeProjectsDrawer);
 
-// Click background of the overlay closes drawer (but clicking a card does not)
+// Click background of the overlay closes drawer
 document.getElementById('projects-overlay')?.addEventListener('click', (e) => {
   const drawer = document.getElementById('projects-drawer');
   if (!drawer) return;
@@ -569,7 +875,7 @@ document.getElementById('projects-overlay')?.addEventListener('click', (e) => {
 });
 
 // ===================
-//  Mobile hamburger (kept small & safe)
+//  Mobile hamburger
 // ===================
 const hamburger   = document.getElementById('hamburger');
 const mobileNav   = document.getElementById('mobile-nav');
@@ -609,7 +915,7 @@ window.addEventListener('click', (e) => {
 });
 
 // ===================
-//  Mobile: expand card in place; Desktop: open drawer
+//  Mobile/Desktop project panels
 // ===================
 const MOBILE_BP = 720;
 const isMobile = () => window.innerWidth < MOBILE_BP;
@@ -662,12 +968,10 @@ function fillPanel(panel, key) {
       if (!key) return;
 
       if (!isMobile()) {
-        // Desktop: open right drawer (unchanged)
         openProjectsDrawer(key);
         return;
       }
 
-      // Mobile: expand inside this card
       let panel = card.querySelector('.mobile-panel');
       if (!panel) {
         panel = document.createElement('div');
@@ -687,8 +991,6 @@ function fillPanel(panel, key) {
     });
   });
 })();
-// inside the .project-card click callback, before toggling the panel:
-
 
 // ===================
 //  Start!
