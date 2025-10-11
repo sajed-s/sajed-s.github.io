@@ -9,33 +9,40 @@
 </head>
 <body>
 
-  <!-- ✅ Top menu should be first -->
-  <div class="top-menu">
-    <div class="div-wrapper">
-      <div class="text-wrapper" id="home-button">Home</div>
-    </div>
-    <div class="div-wrapper">
-      <div class="text-wrapper" id="projects-button">Projects</div>
-    </div>
-    <div class="div-wrapper">
-      <div class="text-wrapper" id="work-button">Work Experiences</div>
-    </div>
-    <div class="div-wrapper">
-      <div class="text-wrapper" id="contact-button">Get In Touch</div>
-    </div>
+<!-- Mobile hamburger (shown on small screens) -->
+<button class="hamburger" id="hamburger"
+        aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav">
+  <span></span><span></span><span></span>
+</button>
 
+<!-- Existing top menu (unchanged for desktop) -->
+<nav class="top-menu" id="top-menu">
+  <div class="div-wrapper">
+    <div class="text-wrapper" id="home-button">Home</div>
   </div>
+  <div class="div-wrapper">
+    <div class="text-wrapper" id="projects-button">Projects</div>
+  </div>
+  <div class="div-wrapper">
+    <div class="text-wrapper" id="work-button">Work Experiences</div>
+  </div>
+  <div class="div-wrapper">
+    <div class="text-wrapper" id="contact-button">Get In Touch</div>
+  </div>
+</nav>
+
+<!-- Mobile slide-out menu -->
+<nav class="mobile-nav" id="mobile-nav" aria-hidden="true">
+  <button class="mobile-close" id="mobile-close" aria-label="Close menu">&times;</button>
+  <a class="mobile-link" data-target="home-button">Home</a>
+  <a class="mobile-link" data-target="projects-button">Projects</a>
+  <a class="mobile-link" data-target="work-button">Work Experiences</a>
+  <a class="mobile-link" data-target="contact-button">Get In Touch</a>
+</nav>
 
   
 
 
-  <!-- 3D canvas will be added by JS -->
-  <img id="profile-image" src="your-image.jpg" alt="Profile" />
-  <div class="contact-box">...</div>
-  <div class="about-box">
-    <h2>About Me</h2>
-    <p id="about-text"></p>
-  </div>
 
 
 
@@ -81,8 +88,8 @@
     </div>
     <div class="panel info-panel">
       <h1>Sajed Sarabandi</h1>
-      <h2>Frontend / ML / CV</h2>
-      <p>Short intro about you goes here. We can style this however you like.</p>
+      <h2>Software Engineer</h2>
+      <p>I help machines open their eyes to our world, hoping they’ll help us open ours to the stars.</p>
 
   
   </div>
@@ -174,7 +181,7 @@
   </div>
 </section>
 
-  
+
 <!-- Three.js and your script -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>

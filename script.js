@@ -1,3 +1,4 @@
+
 // ===================
 //  Three.js Scene
 // ===================
@@ -8,19 +9,29 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
+
+// === Adjust camera for mobile (less zoom) ===
+if (window.innerWidth < 720) {
+  camera.position.z = 9;
+  camera.fov = 95;
+  camera.updateProjectionMatrix();
+}
+
 scene.add(camera);
 
 const renderer  = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-const raycaster = new THREE.Raycaster();
-const mouse     = new THREE.Vector2();
-
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+// keep the canvas behind UI
 renderer.domElement.style.position = "fixed";
 renderer.domElement.style.top  = "0";
 renderer.domElement.style.left = "0";
 renderer.domElement.style.zIndex = "0";
+
+const raycaster = new THREE.Raycaster();
+const mouse     = new THREE.Vector2();
 
 // ===================
 //  Lights
@@ -36,17 +47,13 @@ scene.add(ambientLight);
 //  Flags & State
 // ===================
 let hoveredObject = null;
-let focusOnStar   = false;   // (kept if you want sun zoom)
+let focusOnStar   = false;
 let focusHome     = false;
 let focusOnMoon   = false;
 
-
 let satellite = null;
 
-
-
-
-let currentMoonIndex = 3;                       // default if you want one pre-picked
+let currentMoonIndex = 3; // default if you want one pre-picked
 const SECTION_TO_MOON = { projects: 0, work: 1, contact: 2 };
 const MOON_TO_SECTION = { 0: "projects", 1: "work", 2: "contact" };
 
@@ -60,7 +67,7 @@ function openSection(section) {
     case "home":     showHomeOverlay?.();     break;
   }
 }
-const targetPosition   = new THREE.Vector3(0, 0.5, 3.7); // for star zoom
+const targetPosition = new THREE.Vector3(0, 0.5, 3.7); // for star zoom
 
 // ===================
 //  Background Sky + Sun
@@ -111,23 +118,45 @@ for (let i = 0; i < moonCount; i++) {
     radius: 5 + i * 1.5,
     speed:  0.001 + i * 0.0005
   };
-    // Tag specific moons so clicks can find their section
-  if (moons[0]) moons[0].userData.section = "projects";
-  if (moons[1]) moons[1].userData.section = "work";
-  if (moons[2]) moons[2].userData.section = "contact";
+  // tag first three moons to sections
+  if (i === 0) moon.userData.section = "projects";
+  if (i === 1) moon.userData.section = "work";
+  if (i === 2) moon.userData.section = "contact";
 
   moons.push(moon);
   scene.add(moon);
 }
 
+// ===================
+//  Labels & Click Targets
+// ===================
+function attachLabelToObject(object3D, text, onClick, yOffset = 0.6) {
+  const el = document.createElement("div");
+  el.className = "space-label";
+  el.textContent = text;
+  el.style.pointerEvents = "auto"; // allow clicks
+
+  const labelObj = new THREE.CSS2DObject(el);
+  labelObj.position.set(0, yOffset, 0);
+  object3D.add(labelObj);
+
+  if (typeof onClick === "function") {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    });
+  }
+  return labelObj;
+}
 
 // SUN → "Home"
 attachLabelToObject(sphere, "Home", () => {
   openSection("home");
   focusOnMoon = false;
   focusOnStar = false;
-  focusHome   = true;  // smoothly return to initial camera/target
-  if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
+  focusHome   = true;
+  if (satellite) satellite.visible = false;
 }, /*yOffset=*/1.2);
 
 // Moon 0 → Projects
@@ -154,8 +183,6 @@ if (moons[2]) {
   });
 }
 
-
-
 // ===================
 //  Camera & Controls
 // ===================
@@ -169,27 +196,32 @@ controls.enablePan = false;
 const homeCamPos    = camera.position.clone();
 const homeCamTarget = controls.target.clone();
 
-
+// Label renderer
 const labelRenderer = new THREE.CSS2DRenderer();
 labelRenderer.setSize(window.innerWidth, window.innerHeight);
 labelRenderer.domElement.className = "label-layer";
+labelRenderer.domElement.style.position = "fixed";
+labelRenderer.domElement.style.top = "0";
+labelRenderer.domElement.style.left = "0";
+labelRenderer.domElement.style.zIndex = "1"; // above canvas, below overlays
 document.body.appendChild(labelRenderer.domElement);
 
-// Keep both renderers in sync on resize
-window.addEventListener("resize", () => {
-  labelRenderer.setSize(window.innerWidth, window.innerHeight);
-});
 // ===================
-//  Overlay Helpers (safe no-ops if elements are missing)
+//  Overlay Helpers
 // ===================
 function showProjectsOverlay(){
   const el = document.getElementById("projects-overlay");
-  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
+  if (el) {
+    el.classList.add("open");
+    el.setAttribute("aria-hidden", "false");
+    el.classList.remove("shifted"); // initial centered state
+  }
 }
 function hideProjectsOverlay(){
   const el = document.getElementById("projects-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
+
 function showHomeOverlay(){
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
@@ -198,6 +230,25 @@ function hideHomeOverlay(){
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
+
+function showWorkOverlay(){
+  const el = document.getElementById("work-overlay");
+  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
+}
+function hideWorkOverlay(){
+  const el = document.getElementById("work-overlay");
+  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
+}
+
+function showContactOverlay(){
+  const el = document.getElementById("contact-overlay");
+  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
+}
+function hideContactOverlay(){
+  const el = document.getElementById("contact-overlay");
+  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
+}
+
 function hideAllOverlays(){
   hideProjectsOverlay();
   hideHomeOverlay();
@@ -205,29 +256,9 @@ function hideAllOverlays(){
   hideContactOverlay();
 }
 
-
-function attachLabelToObject(object3D, text, onClick, yOffset = 0.6) {
-  const el = document.createElement("div");
-  el.className = "space-label";
-  el.textContent = text;
-  // allow clicks to pass through the layer but not the label
-  el.style.pointerEvents = "auto";
-
-  const labelObj = new THREE.CSS2DObject(el);
-  labelObj.position.set(0, yOffset, 0); // float the tab slightly above the body
-  object3D.add(labelObj);
-
-  if (typeof onClick === "function") {
-    el.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onClick();
-    });
-  }
-  return labelObj;
-}
-
-
+// ===================
+//  Focus helpers
+// ===================
 function focusCameraOnMoon(index) {
   if (!moons[index]) return;
   currentMoonIndex = index;
@@ -235,7 +266,7 @@ function focusCameraOnMoon(index) {
   focusOnStar = false;
   focusHome   = false;
 
-  // (Optional satellite loader preserved)
+  // optional satellite loader
   if (!satellite) {
     const gltfLoader  = new THREE.GLTFLoader();
     const dracoLoader = new THREE.DRACOLoader();
@@ -254,35 +285,19 @@ function focusCameraOnMoon(index) {
   }
 }
 
-function showContactOverlay(){
-  const el = document.getElementById("contact-overlay");
-  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
-}
-function hideContactOverlay(){
-  const el = document.getElementById("contact-overlay");
-  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
-}
-
-
 // ===================
 //  Top Menu Wiring
 // ===================
 document.getElementById("home-button")?.addEventListener("click", (e) => {
   e.preventDefault();
-
-  // Close any other overlay, open Home
   hideAllOverlays();
   showHomeOverlay();
 
-  // Camera return home
   focusOnStar = false;
   focusOnMoon = false;
   focusHome   = true;
-  
 
-  const hdr = document.querySelector(".header");
-  if (hdr) hdr.style.display = "none";
-  if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
+  if (satellite) satellite.visible = false;
 });
 
 document.getElementById("projects-button")?.addEventListener("click", (e) => {
@@ -295,7 +310,6 @@ document.getElementById("projects-button")?.addEventListener("click", (e) => {
 // Optional close buttons if present
 document.getElementById("projects-close")?.addEventListener("click", hideProjectsOverlay);
 document.getElementById("home-close")?.addEventListener("click", hideHomeOverlay);
-
 
 document.getElementById("contact-button")?.addEventListener("click", (e) => {
   e.preventDefault();
@@ -359,7 +373,7 @@ function animate() {
     }
   }
 
-  // Follow the 4th moon when focused
+  // Follow the selected moon when focused
   if (focusOnMoon && moons[currentMoonIndex]) {
     const moonPos = moons[currentMoonIndex].position;
     const desiredCam = moonPos.clone().add(new THREE.Vector3(0, 0.5, 1.5));
@@ -368,7 +382,7 @@ function animate() {
     controls.update();
   }
 
-  // Optional zoom-in on star (kept if you want a gentle zoom)
+  // Optional zoom-in on star
   if (focusOnStar) {
     camera.position.lerp(targetPosition, 0.01);
     camera.lookAt(0, 3, 0);
@@ -390,23 +404,14 @@ function animate() {
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
 }
+
 function goHomeAndClear() {
   hideAllOverlays();
   focusOnMoon = false;
   focusOnStar = false;
   focusHome   = true;
-  if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
+  if (satellite) satellite.visible = false;
 }
-
-function showWorkOverlay(){
-  const el = document.getElementById("work-overlay");
-  if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
-}
-function hideWorkOverlay(){
-  const el = document.getElementById("work-overlay");
-  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
-}
-document.getElementById("work-close")?.addEventListener("click", hideWorkOverlay);
 
 // ===================
 //  Events
@@ -416,10 +421,13 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
 });
+
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") goHomeAndClear();
 });
+
 window.addEventListener("mousemove", (e) => {
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -435,7 +443,7 @@ window.addEventListener("click", () => {
     focusOnMoon = false;
     focusOnStar = false;
     focusHome   = true;
-    if (typeof satellite !== "undefined" && satellite) satellite.visible = false;
+    if (satellite) satellite.visible = false;
     return;
   }
 
@@ -445,76 +453,43 @@ window.addEventListener("click", () => {
     const hit = moonHits[0].object;
     const idx = moons.indexOf(hit);
     if (idx !== -1) {
-      // Move the camera
       focusCameraOnMoon(idx);
-      // Open the correct overlay if mapped/tagged
       const section = MOON_TO_SECTION[idx] || hit.userData.section;
-      if (section) {
-        openSection(section);
-      } else {
-        hideAllOverlays(); // fallback: no mapping
-      }
+      if (section) openSection(section);
+      else hideAllOverlays();
     }
     return;
   }
-
-  // Optional: click empty space does nothing or closes overlays
-  // hideAllOverlays();
 });
 
-
-// ===== Category Projects Data & Drawer Logic =====
+// ===================
+//  Projects Data (used for both desktop drawer and mobile panels)
+// ===================
 const CATEGORY_PROJECTS = {
   bioinformatics: [
-      { title: "Full genome sequence CPV",              url: "https://link.springer.com/content/pdf/10.1186/s12985-023-02102-2.pdf", img: "cpv.png"},
-      { title: "miRNA targeting",                       url: "https://www.sciencedirect.com/science/article/pii/S2405580823001000", img: "mt.png"},
-      { title: "Toxin–antitoxin sequence",              url: "https://scholar.google.com/scholar?oi=bibs&cluster=2667093651387999319&btnI=1&hl=en", img: "tat.png" },
-      { title: "Liver tissue transcriptome data analysis",                 url: "https://scholar.google.com/scholar?oi=bibs&cluster=7009121602870455185&btnI=1&hl=en",img: "lt.png" },
-      { title: "Oxidative stress biomarkers",           url: "https://archrazi.areeo.ac.ir/article_132302_bce77b696b418027013fb1808a67aa24.pdf",img: "so.png" },
-      { title: "miRNA in breast cancer",                url: "https://www.frontiersin.org/journals/immunology/articles/10.3389/fimmu.2024.1333563/full",img: "mb.png" }
-      
-    ],
-cv: [
-  {
-    title: "Self-driving car sensor fusion",
-    img: "self_d.jpg",
-    desc: "Integrating LiDAR, radar, and camera data for robust perception in autonomous vehicles."
-  },
-  {
-    title: "Nucleus-to-cytoplasm ratio in blood images",
-    img: "blood.png",
-    desc: "Segmentation and quantitative analysis of blood cell images for diagnostic research."
-  },
-  {
-    title: "CT Scan Foreign Object detection",
-    img: "fro.png",
-    desc: "Machine learning approach for segmentation multiple dual energy objects from CT scan."
-  },
-  {
-    title: "Pose estimation on cattle",
-    img: "pos.mp4",
-    desc: "Computer vision pipeline for detecting and estimating cattle body poses from camera data."
-  },
-    {
-    title: "Computer Vision for Zebrafish Tracking",
-    img: "traking.mp4",
-    desc: "Computer vision pipeline for Zebrafish Tracking."
-  }
-],
-srs: [
-  {
-    title: "SPEXone georegistration",
-    img: "spex.png",             // put an image with this name next to index.html
-    desc: "Georegistration of SPEX airborne data using keypoint registration."
-  },
-  {
-    title: "NH₃ super-resolution",
-    img: "thesis.png",                 // put an image with this name next to index.html
-    desc: "Predicting NH₃ at higher resolution from CH₄ and NO₂."
-  }
-]
+    { title: "Full genome sequence CPV", url: "https://link.springer.com/content/pdf/10.1186/s12985-023-02102-2.pdf", img: "cpv.png" },
+    { title: "miRNA targeting", url: "https://www.sciencedirect.com/science/article/pii/S2405580823001000", img: "mt.png" },
+    { title: "Toxin–antitoxin sequence", url: "https://scholar.google.com/scholar?oi=bibs&cluster=2667093651387999319&btnI=1&hl=en", img: "tat.png" },
+    { title: "Liver tissue transcriptome data analysis", url: "https://scholar.google.com/scholar?oi=bibs&cluster=7009121602870455185&btnI=1&hl=en", img: "lt.png" },
+    { title: "Oxidative stress biomarkers", url: "https://archrazi.areeo.ac.ir/article_132302_bce77b696b418027013fb1808a67aa24.pdf", img: "so.png" },
+    { title: "miRNA in breast cancer", url: "https://www.frontiersin.org/journals/immunology/articles/10.3389/fimmu.2024.1333563/full", img: "mb.png" }
+  ],
+  cv: [
+    { title: "Self-driving car sensor fusion", img: "self_d.jpg", desc: "Integrating LiDAR, radar, and camera data for robust perception in autonomous vehicles." },
+    { title: "Nucleus-to-cytoplasm ratio in blood images", img: "blood.png", desc: "Segmentation and quantitative analysis of blood cell images for diagnostic research." },
+    { title: "CT Scan Foreign Object detection", img: "fro.png", desc: "Machine learning approach for segmentation multiple dual energy objects from CT scan." },
+    { title: "Pose estimation on cattle", img: "pos.mp4", desc: "Computer vision pipeline for detecting and estimating cattle body poses from camera data." },
+    { title: "Computer Vision for Zebrafish Tracking", img: "traking.mp4", desc: "Computer vision pipeline for Zebrafish Tracking." }
+  ],
+  srs: [
+    { title: "SPEXone georegistration", img: "spex.png", desc: "Georegistration of SPEX airborne data using keypoint registration." },
+    { title: "NH₃ super-resolution", img: "thesis.png", desc: "Predicting NH₃ at higher resolution from CH₄ and NO₂." }
+  ]
 };
 
+// ===================
+//  Desktop Drawer (unchanged for desktop)
+// ===================
 function openProjectsDrawer(categoryKey){
   const overlay = document.getElementById('projects-overlay');
   const drawer  = document.getElementById('projects-drawer');
@@ -529,7 +504,7 @@ function openProjectsDrawer(categoryKey){
   };
   title.textContent = titleMap[categoryKey] || 'Projects';
 
-  // Build list (supports string or {title, url?, img?})
+  // Build list
   list.innerHTML = '';
   const items = CATEGORY_PROJECTS[categoryKey] || [];
   items.forEach(entry => {
@@ -543,16 +518,14 @@ function openProjectsDrawer(categoryKey){
     card.className = 'project-item';
     card.setAttribute('role', 'listitem');
 
-    let imageHTML = "";
-    if (img && (img.endsWith(".mp4") || img.endsWith(".webm"))) {
-      imageHTML = `<video class="project-thumb" src="${img}" autoplay loop muted playsinline></video>`;
-    } else {
-      imageHTML = `<img class="project-thumb" src="${img || ''}" alt="${name}">`;
+    let media = "";
+    if (img && (/\.(mp4|webm)$/i.test(img))) {
+      media = `<video class="project-thumb" src="${img}" autoplay loop muted playsinline></video>`;
+    } else if (img) {
+      media = `<img class="project-thumb" src="${img}" alt="${name}">`;
     }
 
-    let inner = `${imageHTML}
-                <h4>${name}</h4>
-                ${desc ? `<p class="desc">${desc}</p>` : ''}`;
+    const inner = `${media}<h4>${name}</h4>${desc ? `<p class="desc">${desc}</p>` : ''}`;
 
     if (url) {
       card.innerHTML =
@@ -568,22 +541,10 @@ function openProjectsDrawer(categoryKey){
     list.appendChild(card);
   });
 
-
-  // Reveal right column and slide categories left
   overlay.classList.add('shifted');
   drawer.classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
   list.scrollTop = 0;
-}
-
-
-function showProjectsOverlay(){
-  const el = document.getElementById("projects-overlay");
-  if (el) {
-    el.classList.add("open");
-    el.setAttribute("aria-hidden", "false");
-    el.classList.remove("shifted");   // <-- add this so initial state is centered
-  }
 }
 
 function closeProjectsDrawer(){
@@ -592,12 +553,7 @@ function closeProjectsDrawer(){
   if (!drawer) return;
   drawer.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
-  if (overlay) overlay.classList.remove('shifted');  // back to centered state
-}
-
-function hideWorkOverlay(){
-  const el = document.getElementById("work-overlay");
-  if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
+  if (overlay) overlay.classList.remove('shifted');
 }
 
 // Close drawer with the X (if present)
@@ -612,15 +568,128 @@ document.getElementById('projects-overlay')?.addEventListener('click', (e) => {
   if (!clickedInsideDrawer && !clickedCard) closeProjectsDrawer();
 });
 
+// ===================
+//  Mobile hamburger (kept small & safe)
+// ===================
+const hamburger   = document.getElementById('hamburger');
+const mobileNav   = document.getElementById('mobile-nav');
+const mobileClose = document.getElementById('mobile-close');
 
-// Bind category cards -> open drawer with that category
-document.querySelectorAll('.project-card').forEach(card => {
-  card.addEventListener('click', () => {
-    const key = card.getAttribute('data-key');
-    if (key) openProjectsDrawer(key);
+function openMobileNav() {
+  if (!mobileNav) return;
+  mobileNav.classList.add('open');
+  mobileNav.setAttribute('aria-hidden', 'false');
+  hamburger?.setAttribute('aria-expanded', 'true');
+}
+function closeMobileNav() {
+  if (!mobileNav) return;
+  mobileNav.classList.remove('open');
+  mobileNav.setAttribute('aria-hidden', 'true');
+  hamburger?.setAttribute('aria-expanded', 'false');
+}
+hamburger?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (mobileNav?.classList.contains('open')) closeMobileNav();
+  else openMobileNav();
+});
+mobileClose?.addEventListener('click', closeMobileNav);
+document.querySelectorAll('.mobile-link').forEach(a => {
+  a.addEventListener('click', () => {
+    const targetId = a.getAttribute('data-target');
+    document.getElementById(targetId)?.click();
+    closeMobileNav();
   });
 });
+window.addEventListener('click', (e) => {
+  if (!mobileNav?.classList.contains('open')) return;
+  if (!mobileNav.contains(e.target) && e.target !== hamburger) closeMobileNav();
+});
+['projects-button','work-button','contact-button','home-button'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('click', () => { if (mobileNav?.classList.contains('open')) closeMobileNav(); });
+});
+
+// ===================
+//  Mobile: expand card in place; Desktop: open drawer
+// ===================
+const MOBILE_BP = 720;
+const isMobile = () => window.innerWidth < MOBILE_BP;
+
+function buildProjectNode(entry) {
+  const isObj = entry && typeof entry === 'object';
+  const name  = isObj ? (entry.title || entry.name || 'Project') : String(entry);
+  const url   = isObj ? entry.url   : null;
+  const img   = isObj ? (entry.img || entry.image || "") : "";
+  const desc  = isObj ? (entry.desc || entry.description || "") : "";
+
+  const node = document.createElement('article');
+  node.className = 'project-item';
+  node.setAttribute('role', 'listitem');
+
+  let media = '';
+  if (img) {
+    if (/\.(mp4|webm)$/i.test(img)) {
+      media = `<video class="project-thumb" src="${img}" autoplay loop muted playsinline></video>`;
+    } else {
+      media = `<img class="project-thumb" src="${img}" alt="${name}">`;
+    }
+  }
+
+  const inner = `${media}<h4>${name}</h4>${desc ? `<p class="desc">${desc}</p>` : ''}`;
+  if (url) {
+    node.innerHTML = `<a class="project-link" href="${url}" target="_blank" rel="noopener noreferrer" aria-label="${name} (opens in new tab)">${inner}</a>`;
+    node.querySelector('a').addEventListener('click', e => e.stopPropagation());
+  } else {
+    node.innerHTML = inner;
+  }
+  return node;
+}
+
+function fillPanel(panel, key) {
+  if (panel.dataset.filled === '1') return;
+  const data = CATEGORY_PROJECTS[key] || [];
+  data.forEach(entry => panel.appendChild(buildProjectNode(entry)));
+  panel.dataset.filled = '1';
+}
+
+(function bindProjectCards() {
+  const cards = document.querySelectorAll('.project-card[data-key]');
+  cards.forEach(card => {
+    if (card.dataset.bound === '1') return;
+    card.dataset.bound = '1';
+
+    card.addEventListener('click', () => {
+      const key = card.getAttribute('data-key');
+      if (!key) return;
+
+      if (!isMobile()) {
+        // Desktop: open right drawer (unchanged)
+        openProjectsDrawer(key);
+        return;
+      }
+
+      // Mobile: expand inside this card
+      let panel = card.querySelector('.mobile-panel');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'mobile-panel';
+        card.appendChild(panel);
+      }
+
+      fillPanel(panel, key);
+
+      const willOpen = !card.classList.contains('open');
+      document.querySelectorAll('.project-card.open').forEach(c => { if (c !== card) c.classList.remove('open'); });
+      card.classList.toggle('open', willOpen);
+
+      if (willOpen) {
+        setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40);
+      }
+    });
+  });
+})();
+// inside the .project-card click callback, before toggling the panel:
 
 
-// Kick off
+// ===================
+//  Start!
 animate();

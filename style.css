@@ -960,3 +960,365 @@ body {
 .contact-overlay::before {
   z-index: 0;
 }
+/* === Hamburger (mobile only) === */
+.hamburger {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  width: 40px;
+  height: 40px;
+  display: none;            /* hidden on desktop */
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-direction: column;
+  background: rgba(10,10,20,0.8);
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(0,255,255,0.25);
+  z-index: 2500;            /* above everything */
+}
+.hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #00ffff;
+  border-radius: 1px;
+}
+
+/* === Mobile slide-out menu === */
+.mobile-nav {
+  position: fixed;
+  top: 0; left: 0;
+  width: min(78vw, 320px);
+  height: 100dvh;
+  background: rgba(10,10,20,0.92);
+  border-right: 1px solid rgba(0,255,255,0.25);
+  box-shadow: 0 0 20px rgba(0,0,0,0.55);
+  transform: translateX(-105%);
+  transition: transform .25s ease;
+  z-index: 2400;            /* below the hamburger, above overlays */
+  padding: 16px 14px;
+}
+.mobile-nav.open { transform: translateX(0); }
+
+.mobile-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  display: grid; place-items: center;
+}
+
+.mobile-link {
+  display: block;
+  padding: 12px 8px;
+  margin-top: 8px;
+  font-family: 'Orbitron', sans-serif;
+  color: #00ffff;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.mobile-link:active,
+.mobile-link:focus,
+.mobile-link:hover {
+  color: #fff;
+  background: rgba(0,255,255,0.08);
+  border-color: rgba(0,255,255,0.25);
+  text-shadow: 0 0 8px #0ff;
+}
+
+/* Show hamburger & hide desktop menu on small screens */
+@media (max-width: 720px) {
+  .hamburger { display: flex; }
+  #top-menu { display: none; }  /* hide the centered desktop menu */
+}
+
+/* === Projects: force ONE column on phones === */
+@media (max-width: 720px) {
+  .projects-drawer .project-list {
+    grid-template-columns: 1fr !important;  /* 1 column on phone */
+    gap: 12px;
+    max-height: calc(100vh - 260px);
+  }
+}
+/* ===== Mobile: category card expands to show its projects ===== */
+@media (max-width: 720px) {
+  /* Hide the right-side drawer entirely on phones */
+  .projects-drawer { display: none !important; }
+
+  /* Make the category grid a single centered column */
+  .projects-grid {
+    grid-template-columns: 1fr !important;
+    width: min(520px, 100% - 32px) !important;
+    margin: 0 auto !important;
+    gap: 12px !important;
+  }
+
+  /* Each category card can contain an expanding panel */
+  .category-card {
+    overflow: hidden;                    /* clip the slide animation */
+  }
+
+  /* The panel that holds project items INSIDE the card */
+  .category-card .mobile-panel {
+    display: grid;
+    grid-template-columns: 1fr;          /* one per line */
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 0;                       /* collapsed */
+    opacity: 0;
+    transition: max-height .28s ease, opacity .18s ease;
+  }
+  .category-card.open .mobile-panel {
+    max-height: 1500px;                  /* enough to reveal list */
+    opacity: 1;
+  }
+
+  /* Optional: style of each project item inside the panel */
+  .category-card .mobile-panel .project-item {
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+}
+@media (max-width: 720px) {
+  .projects-drawer { display: none !important; }
+
+  .category-card,
+  .bioinformatics-card,
+  .computer-vision-card,
+  .satellite-card {
+    overflow: hidden;
+    position: relative;
+  }
+
+  .mobile-panel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height .3s ease, opacity .2s ease;
+  }
+
+  .open .mobile-panel {
+    max-height: 1500px;
+    opacity: 1;
+  }
+
+  .mobile-panel .project-item {
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+}
+/* ===== Mobile: expand projects inside the card ===== */
+
+/* ===== Mobile: show projects INSIDE the clicked card; keep desktop same ===== */
+/* === Mobile polishing: spacing, centering, no overlap === */
+@media (max-width: 720px) {
+
+  /* Center the cards and keep a consistent max width */
+  .projects-grid {
+    grid-template-columns: 1fr !important;
+    width: min(520px, 100% - 32px) !important;
+    margin: 0 auto !important;
+    gap: 18px !important;                 /* a bit more gap between cards */
+    justify-items: center;
+  }
+
+  .project-card {
+    position: relative;                    /* create stacking context */
+    width: 100%;
+    margin: 0 auto;                        /* prevent any left shift */
+    box-sizing: border-box;
+  }
+
+  /* When a card is open, keep extra space below so the next card won't overlap */
+  .project-card.open {
+    z-index: 2;                            /* sit above neighbors */
+    margin-bottom: 18px;                   /* extra breathing room */
+  }
+
+  /* The expanding panel inside the card */
+  .project-card .mobile-panel {
+    display: grid;
+    grid-template-columns: 1fr;            /* one project per line */
+    gap: 12px;
+    margin-top: 12px;
+    padding-bottom: 10px;                   /* tiny buffer at the end */
+    max-height: 0;
+    opacity: 0;
+    transition: max-height .3s ease, opacity .2s ease;
+    width: 100%;
+  }
+  .project-card.open .mobile-panel {
+    max-height: 3000px;
+    opacity: 1;
+  }
+
+  /* Make media responsive so content doesn't push layout sideways */
+  .project-item,
+  .project-item .project-link { display: block; }
+  .project-thumb,
+  .project-item img,
+  .project-item video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+  }
+}
+/* === MOBILE: keep Projects centered & kill any desktop shift === */
+@media (max-width: 720px) {
+  /* Drawer is not used on phone */
+  .projects-drawer { display: none !important; }
+
+  /* Neutralize any desktop offsets */
+  .projects-overlay.shifted,
+  .projects-overlay.shifted .projects-grid {
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+  }
+
+  /* Center the grid and prevent horizontal nudge */
+  .projects-grid {
+    grid-template-columns: 1fr !important;
+    width: min(520px, 100% - 32px) !important;
+    margin-inline: auto !important;         /* center */
+    gap: 16px !important;
+    box-sizing: border-box;
+    justify-items: center;
+  }
+
+  /* Make sure each card fills the grid width and stays centered */
+  .project-card {
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  /* Extra spacing when open so nothing overlaps */
+  .project-card.open { margin-bottom: 18px; z-index: 2; }
+
+  /* Media should never widen the card */
+  .project-thumb,
+  .project-item img,
+  .project-item video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+/* ===== Mobile: shrink profile image & About Me ===== */
+@media (max-width: 720px) {
+  /* The standalone profile image on the landing */
+  #profile-image {
+    display: block;
+    max-width: 42vw;          /* was too big; ~40% of viewport */
+    width: 160px;             /* cap size on small phones */
+    height: auto;
+    margin: 10px auto 14px;   /* center it */
+    border-radius: 14px;
+  }
+
+  /* About box container */
+  .about-box {
+    width: min(560px, 100% - 32px);
+    margin: 0 auto 14px;      /* center + tighten spacing */
+    padding: 12px 14px;       /* less padding */
+    border-radius: 14px;
+  }
+
+  /* About box text sizes */
+  .about-box h2 {
+    font-size: clamp(18px, 4.5vw, 22px);
+    margin: 0 0 6px;
+  }
+  .about-box p {
+    font-size: clamp(13px, 3.8vw, 15px);
+    line-height: 1.45;
+  }
+
+  /* If you’re showing a portrait inside the Home overlay */
+  .home-overlay .overlay-photo {
+    display: block;
+    max-width: 70vw;          /* smaller image in the overlay */
+    width: 260px;
+    height: auto;
+    margin: 8px auto 12px;
+    border-radius: 14px;
+  }
+
+  /* Optional: contact box trim (if it's also feeling large) */
+  .contact-box {
+    width: min(560px, 100% - 32px);
+    padding: 12px 14px;
+    margin: 0 auto 14px;
+  }
+}
+
+/* ===== Splash (preload gate) ===== */
+.splash {
+  position: fixed;
+  inset: 0;
+  background: #000;                /* black */
+  display: grid;
+  place-items: center;
+  z-index: 4000;                   /* above everything */
+  transition: opacity .3s ease;
+}
+.splash-inner { text-align: center; }
+.splash-title {
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(26px, 8vw, 54px);
+  letter-spacing: .5px;
+  margin: 0 0 18px;
+  text-shadow: 0 0 18px rgba(0,255,255,.35);
+}
+.splash-enter {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,255,255,.35);
+  background: transparent;
+  color: #0ff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.splash.hide { opacity: 0; pointer-events: none; }
+
+/* Warp overlay */
+.warp {
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 3900;
+  display: grid; place-items: center;
+}
+.warp canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.warp-title {
+  position: relative;
+  color: #0ff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(22px, 6vw, 42px);
+  text-shadow: 0 0 20px rgba(0,255,255,.5);
+  letter-spacing: .6px;
+}
+
+/* White flash for the cut */
+.flash {
+  position: fixed; inset: 0; background: #fff;
+  z-index: 3950; opacity: 0; pointer-events: none;
+  transition: opacity .18s ease;
+}
+.flash.show { opacity: 1; }
+.flash.hide { opacity: 0; }
