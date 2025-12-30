@@ -1063,3 +1063,201 @@ function fillPanel(panel, key) {
 // ===================
 //  Start!
 animate();
+const cursor = document.getElementById("astro-cursor");
+
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+
+let posX = mouseX;
+let posY = mouseY;
+
+let lastX = mouseX;
+let lastY = mouseY;
+
+let currentAngle = 0;
+
+document.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function animateCursor() {
+  // Smooth follow (inertia)
+  const followSpeed = 0.08;
+  posX += (mouseX - posX) * followSpeed;
+  posY += (mouseY - posY) * followSpeed;
+
+  // Direction
+  const dx = mouseX - lastX;
+  const dy = mouseY - lastY;
+
+  // Smooth rotation
+  const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+  currentAngle += (targetAngle - currentAngle) * 0.15;
+
+  // Gentle wobble
+  const wobble = Math.sin(Date.now() * 0.006) * 2;
+
+  cursor.style.transform = `
+    translate(${posX}px, ${posY}px)
+    rotate(${currentAngle + wobble}deg)
+  `;
+
+  lastX = mouseX;
+  lastY = mouseY;
+
+  requestAnimationFrame(animateCursor);
+}
+
+animateCursor();
+
+
+// ===================
+//  AI Chat UI Wiring
+// ===================
+
+// Grab elements
+const aiToggle = document.getElementById("ai-toggle");
+const aiChat   = document.getElementById("ai-chat");
+const aiMsgs   = document.getElementById("ai-messages");
+const aiInput  = document.getElementById("ai-text");
+const aiSend   = document.getElementById("ai-send");
+
+const aiRobot  = document.getElementById("ai-robot");
+const robotImg = document.getElementById("robot-img");
+
+// Safety check
+if (!aiToggle || !aiChat || !aiMsgs || !aiInput || !aiSend || !aiRobot || !robotImg) {
+  console.error("❌ AI chat elements not found");
+} else {
+  console.log("✅ AI chat elements found");
+}
+
+// ===================
+//  Robot helpers
+// ===================
+
+function robotIdle() {
+  aiRobot.style.display = "flex";
+  robotImg.src = "rocket.gif";
+}
+
+function robotSpeak() {
+  aiRobot.style.display = "flex";
+  robotImg.src = "rocket.gif";
+}
+
+function robotHide() {
+  aiRobot.style.display = "none";
+}
+
+// ===================
+//  Toggle chat open / close
+// ===================
+
+aiToggle.addEventListener("click", () => {
+  const isOpen = aiChat.style.display === "flex";
+
+  aiChat.style.display = isOpen ? "none" : "flex";
+  aiChat.setAttribute("aria-hidden", isOpen ? "true" : "false");
+
+  if (!isOpen) {
+    robotIdle();   // show idle robot when opening
+  } else {
+    robotHide();   // hide robot when closing
+  }
+});
+
+// ===================
+//  Browser LLM (transformers.js)
+// ===================
+
+let aiBusy = false;
+let llm = null;
+let loadingModel = false;
+
+async function loadLLM() {
+  if (llm || loadingModel) return;
+  loadingModel = true;
+
+  aiMsgs.innerHTML += `<div><em>Loading AI model (first time only)…</em></div>`;
+  aiMsgs.scrollTop = aiMsgs.scrollHeight;
+
+  llm = await window.pipeline(
+    "text2text-generation",
+    "Xenova/flan-t5-small"
+  );
+
+  aiMsgs.innerHTML += `<div><em>AI ready ✅</em></div>`;
+  aiMsgs.scrollTop = aiMsgs.scrollHeight;
+}
+
+// ===================
+//  Send AI Message
+// ===================
+
+async function sendAIMessage() {
+  if (aiBusy) return;
+
+  const text = aiInput.value.trim();
+  if (!text) return;
+
+  aiBusy = true;
+
+  // User message
+  aiMsgs.innerHTML += `<div><strong>You:</strong> ${text}</div>`;
+  aiInput.value = "";
+  aiMsgs.scrollTop = aiMsgs.scrollHeight;
+
+  await loadLLM();
+
+  // Robot speaking animation
+  robotSpeak();
+
+  // Small delay for realism
+  await new Promise(r => setTimeout(r, 300));
+
+  // Thinking indicator
+  const thinking = document.createElement("div");
+  thinking.innerHTML = "<em>🤖 thinking...</em>";
+  aiMsgs.appendChild(thinking);
+  aiMsgs.scrollTop = aiMsgs.scrollHeight;
+
+  // Prompt (simple & constrained for small model)
+  const prompt = `
+You are a tiny AI running in a browser.
+
+Rules:
+- If the user says hi or hello, greet them.
+
+User question:
+"${text}"
+
+Answer:
+`;
+
+  const result = await llm(prompt, { max_new_tokens: 35 });
+
+  // Cleanup
+  thinking.remove();
+  robotIdle();
+
+  // AI response
+  aiMsgs.innerHTML += `<div><strong>AI:</strong> ${result[0].generated_text}</div>`;
+  aiMsgs.scrollTop = aiMsgs.scrollHeight;
+
+  aiBusy = false;
+}
+
+// ===================
+//  Input events
+// ===================
+
+// Send button
+aiSend.addEventListener("click", sendAIMessage);
+
+// Enter key
+aiInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendAIMessage();
+});
+

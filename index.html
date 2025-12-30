@@ -7,6 +7,33 @@
   <link rel="stylesheet" href="globals.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
+<!-- ===================
+     AI Chat Widget
+=================== -->
+<button id="ai-toggle" aria-label="Open AI chat">🤖</button>
+
+
+<div id="ai-chat" aria-hidden="true">
+  <div id="ai-header">Thinking… probably.</div>
+  <div id="ai-robot" aria-hidden="true">
+  <img id="robot-img" src="robot.gif" alt="AI Robot" />
+</div>
+
+  <div id="ai-messages"></div>
+
+  <div id="ai-input">
+    <input
+      type="text"
+      id="ai-text"
+      placeholder="I run in your browser. Be gentle."
+      autocomplete="off"
+    />
+    <button id="ai-send">Send</button>
+  </div>
+</div>
+
+
 <body>
 
 <!-- Mobile hamburger (shown on small screens) -->
@@ -151,6 +178,13 @@
   </div>
 </section>
 
+
+<div id="astro-cursor">
+  <img src="chil.cur" alt="Astronaut Cursor" />
+</div>
+
+
+
 <section class="contact-overlay" id="contact-overlay" aria-hidden="true">
   <div class="contact-container">
     <h2>Get in Touch</h2>
@@ -182,21 +216,27 @@
 </section>
 
 
-<!-- Three.js and your script -->
+<!-- Three.js (0.146.0 everywhere) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/postprocessing/UnrealBloomPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/loaders/DRACOLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/renderers/CSS2DRenderer.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/loaders/DRACOLoader.js"></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/renderers/CSS2DRenderer.js"></script>
-  <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/shaders/CopyShader.js"></script>
+
+<!-- transformers.js (browser LLM) -->
+<script type="module">
+  import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1";
+  window.pipeline = pipeline;
+</script>
+
+<!-- Your script -->
+<script src="script.js" defer></script>
 </body>
 </html>
