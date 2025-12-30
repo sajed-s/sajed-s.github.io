@@ -1225,15 +1225,9 @@ async function sendAIMessage() {
 
   // Prompt (simple & constrained for small model)
   const prompt = `
-answer the user considering this rule.
 
-Rules:
-- If the user says hi or hello, greet them.
-
-User question:
 "${text}"
 
-Answer:
 `;
 
   const result = await llm(prompt, { max_new_tokens: 35 });
