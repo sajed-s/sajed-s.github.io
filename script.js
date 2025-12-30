@@ -1225,7 +1225,7 @@ async function sendAIMessage() {
 
   // Prompt (simple & constrained for small model)
   const prompt = `
-You are a tiny AI running in a browser.
+answer the user considering this rule.
 
 Rules:
 - If the user says hi or hello, greet them.
