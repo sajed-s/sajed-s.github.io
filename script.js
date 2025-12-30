@@ -1083,7 +1083,7 @@ document.addEventListener("mousemove", (e) => {
 
 function animateCursor() {
   // Smooth follow (inertia)
-  const followSpeed = 0.08;
+  const followSpeed = 0.12;
   posX += (mouseX - posX) * followSpeed;
   posY += (mouseY - posY) * followSpeed;
 
