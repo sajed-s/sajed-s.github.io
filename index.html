@@ -35,6 +35,7 @@
 
 
 <body>
+<canvas id="nebula-bg"></canvas>
 
 <!-- Mobile hamburger (shown on small screens) -->
 <button class="hamburger" id="hamburger"
@@ -118,13 +119,64 @@
       <h2>Software Engineer</h2>
       <p>I help machines open their eyes to our world, hoping they’ll help us open ours to the stars.</p>
 
-  
+      <div id="mission-terminal"></div>
+
   </div>
 </section>
 
 <section class="work-overlay" id="work-overlay" aria-hidden="true">
   
   <div class="work-container">
+
+    <!-- OpenGeoHub -->
+    <article class="work-card">
+      <div class="work-header">
+        <img src="opengeo_logo.jpg" alt="OpenGeoHub Logo" class="company-logo" />
+        <div>
+          <h3>OpenGeoHub Foundation</h3>
+          <p class="date">Feb 2026 – Present · 2 mos</p>
+        </div>
+      </div>
+      <p class="work-role">Software Engineer · Full-time · On-site</p>
+      <ul class="work-tasks">
+        <li>Building software for high performance computing environments applied to geospatial data.</li>
+        <li>Developing spatiotemporal machine learning pipelines for environmental analysis.</li>
+        <li>Contributing to open-source geospatial tooling used by the research community.</li>
+      </ul>
+      <div class="learned">
+        <h4>What I Learned</h4>
+        <ul>
+          <li>High Performance Computing (HPC)</li>
+          <li>Spatiotemporal Machine Learning</li>
+          <li>Open-source Geospatial Engineering</li>
+        </ul>
+      </div>
+    </article>
+
+    <!-- Hydramo -->
+    <article class="work-card">
+      <div class="work-header">
+        <img src="hydramo_logo.jpg" alt="Hydramo Logo" class="company-logo" />
+        <div>
+          <h3>Hydramo</h3>
+          <p class="date">Nov 2025 – Feb 2026 · 4 mos</p>
+        </div>
+      </div>
+      <p class="work-role">Remote Sensing Engineer · Apprenticeship · Remote</p>
+      <ul class="work-tasks">
+        <li>Developed and maintained remote sensing data pipelines and APIs.</li>
+        <li>Worked on DevOps practices to streamline deployment and integration workflows.</li>
+        <li>Contributed to API development for geospatial data processing services.</li>
+      </ul>
+      <div class="learned">
+        <h4>What I Learned</h4>
+        <ul>
+          <li>DevOps & CI/CD Pipelines</li>
+          <li>API Development</li>
+          <li>Remote Sensing Data Engineering</li>
+        </ul>
+      </div>
+    </article>
 
     <!-- SRON -->
     <article class="work-card">
@@ -175,13 +227,12 @@
       </div>
     </article>
 
+
   </div>
 </section>
 
 
-<div id="astro-cursor">
-  <img src="chil.cur" alt="Astronaut Cursor" />
-</div>
+
 
 
 
@@ -190,9 +241,9 @@
     <h2>Get in Touch</h2>
 
     <div class="contact-grid">
-      <a href="mailto:sajed.sarabandi@gmail.com" class="contact-item" target="_blank">
+      <a href="/cdn-cgi/l/email-protection#e89b89828d8cc69b899a898a89868c81a88f85898184c68b8785" class="contact-item" target="_blank">
         <img src="email.svg" alt="Email icon" />
-        <span>sajed.sarabandi@gmail.com</span>
+        <span><span class="__cf_email__" data-cfemail="d2a1b3b8b7b6fca1b3a0b3b0b3bcb6bb92b5bfb3bbbefcb1bdbf">[email&#160;protected]</span></span>
       </a>
 
       <a href="https://www.researchgate.net/profile/Sajed-Sarabandi" class="contact-item" target="_blank">
@@ -211,13 +262,13 @@
       </a>
     </div>
 
-    <a href="mailto:sajed.sarabandi@gmail.com" class="email-button">Send Me an Email</a>
+    <a href="/cdn-cgi/l/email-protection#c5b6a4afa0a1ebb6a4b7a4a7a4aba1ac85a2a8a4aca9eba6aaa8" class="email-button">Send Me an Email</a>
   </div>
 </section>
 
 
 <!-- Three.js (0.146.0 everywhere) -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -235,6 +286,25 @@
   import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1";
   window.pipeline = pipeline;
 </script>
+
+<!-- Project Viewer (Bioinformatics / CV) -->
+<div id="project-viewer"></div>
+
+<!-- Category Switcher -->
+<div id="cat-switcher">
+  <div class="cat-tab" data-cat="bioinformatics">Bioinformatics</div>
+  <div class="cat-tab" data-cat="srs">Remote Sensing</div>
+  <div class="cat-tab" data-cat="cv">Computer Vision</div>
+</div>
+
+<!-- SRS Image Viewer -->
+<div id="srs-viewer"></div>
+
+<!-- SRS Text Panel (left side, shown alongside satellite images) -->
+<div id="srs-text-panel" aria-live="polite"></div>
+
+<!-- CV Text Panel (right side, shown alongside computer vision images) -->
+<div id="cv-text-panel" aria-live="polite"></div>
 
 <!-- Your script -->
 <script src="script.js" defer></script>

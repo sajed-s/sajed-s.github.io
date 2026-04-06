@@ -1,214 +1,50 @@
 @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
+
 * {
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
 }
-html,
-body {
-  margin: 0px;
+
+html, body {
+  margin: 0;
   height: 100%;
 }
-/* a blue color as a generic focus style */
+
 button:focus-visible {
-  outline: 2px solid #4a90e2 !important;
-  outline: -webkit-focus-ring-color auto 5px !important;
-}
-a {
-  text-decoration: none;
+  outline: 2px solid #00d9c0;
+  outline-offset: 2px;
 }
 
-.project-item .desc {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: #c9d6e3;
-}
-.work-overlay {
-  position: fixed;
-  inset: 0;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  padding: 32px;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  z-index: 30;
-  overflow-y: auto;
-}
+a { text-decoration: none; }
 
-.work-overlay.open {
-  display: flex;
-}
+/* ── Z-index contract ──────────────────────────────────── */
+/* canvas            z: 0   (set in JS)                    */
+/* .label-layer      z: 100 (CSS2DRenderer)                */
+/* overlays          z: 500                                */
+/* .top-menu         z: 2000                               */
+/* .mobile-nav       z: 2400                               */
+/* .hamburger        z: 2500                               */
+/* #ai-toggle/chat   z: 3000                               */
+/* .warp             z: 3900                               */
+/* .flash            z: 3950                               */
+/* .splash           z: 4000                               */
+/* #astro-cursor     z: 9999                               */
 
-.work-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: min(900px, 95vw);
-}
-
-.work-card {
-  background: rgba(0, 17, 34, 0.45);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
-  padding: 24px;
-  color: #e6f1ff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-.work-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(102,166,255,0.25);
-}
-
-.work-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
-}
-.company-logo {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-}
-
-.work-card h3 {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 22px;
-  margin: 0;
-}
-.date {
-  font-size: 14px;
-  color: #c9d6e3;
-  margin: 2px 0 0;
-}
-
-.work-role {
-  font-size: 16px;
-  color: #66a6ff;
-  margin: 6px 0 12px;
-  font-weight: 600;
-}
-
-.work-tasks, .learned ul {
-  margin: 0;
-  padding-left: 20px;
-  line-height: 1.6;
-  font-size: 15px;
-}
-.learned {
-  margin-top: 10px;
-}
-.learned h4 {
-  font-size: 15px;
-  color: #66a6ff;
-  margin-bottom: 4px;
-}
-.contact-overlay {
-  position: fixed;
-  inset: 0;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  z-index: 30;
-  padding: 32px;
-}
-
-.contact-overlay.open {
-  display: flex;
-}
-
-.contact-container {
-  background: rgba(0, 17, 34, 0.45);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 18px;
-  padding: 32px;
-  width: min(600px, 90vw);
-  color: #e6f1ff;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-}
-
-.contact-container h2 {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 28px;
-  margin-bottom: 24px;
-  color: #66a6ff;
-}
-
-.contact-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: start;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 16px;
-  color: #e6f1ff;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.contact-item:hover span {
-  color: #66a6ff;
-}
-
-.contact-item img {
-  width: 24px;
-  height: 24px;
-  filter: invert(100%);
-  opacity: 0.9;
-}
-
-.email-button {
-  display: inline-block;
-  margin-top: 28px;
-  padding: 12px 32px;
-  background: #66a6ff;
-  color: white;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-.email-button:hover {
-  background: #5494e8;
-  transform: translateY(-2px);
-}
-/* Keep the top menu ALWAYS clickable and above everything */
 .top-menu {
-  z-index: 2000;        /* higher than overlays and the CSS2D label layer */
-  pointer-events: auto; /* ensure it accepts clicks */
+  z-index: 2000;
+  pointer-events: auto;
 }
 
-/* Your CSS2DRenderer layer should not eat clicks */
 .label-layer {
-  z-index: 100;         /* below the menu, above the WebGL canvas */
-  pointer-events: none; /* labels themselves re-enable via pointer-events:auto */
+  z-index: 100;
+  pointer-events: none;
 }
 
-/* Make overlays sit BELOW the top menu */
 .projects-overlay,
 .home-overlay,
 .work-overlay,
 .contact-overlay {
   position: fixed;
   inset: 0;
-  z-index: 500;         /* lower than .top-menu’s 2000 */
-  /* keep pointer-events default (auto) so overlay content is still clickable */
-}
-
-/* If you have any full-screen background/cover elements inside overlays, keep them below the menu too */
-.projects-overlay::before,
-.home-overlay::before,
-.work-overlay::before,
-.contact-overlay::before {
-  z-index: 0;
+  z-index: 500;
 }

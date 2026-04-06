@@ -1,4 +1,112 @@
 // ===================
+//  Nebula Background Canvas
+// ===================
+(function() {
+  const cv = document.getElementById('nebula-bg');
+  if (!cv) return;
+
+  function paint() {
+    const W = window.innerWidth, H = window.innerHeight;
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+
+    // Base — very deep space
+    ctx.fillStyle = '#020610';
+    ctx.fillRect(0, 0, W, H);
+
+    // Helper: paint one soft cloud blob
+    function blob(x, y, r, R, G, B, alpha) {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0.00, `rgba(${R},${G},${B},${alpha})`);
+      g.addColorStop(0.35, `rgba(${R},${G},${B},${(alpha*0.55).toFixed(3)})`);
+      g.addColorStop(0.65, `rgba(${R},${G},${B},${(alpha*0.15).toFixed(3)})`);
+      g.addColorStop(1.00, `rgba(${R},${G},${B},0)`);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r, r * 0.6, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- Large nebula clouds — boosted opacity so they're clearly visible ---
+    // Purple core — centre-left
+    blob(W*0.28, H*0.42, W*0.40, 130, 30, 220, 0.55);
+    blob(W*0.18, H*0.58, W*0.30, 100, 20, 180, 0.45);
+    blob(W*0.35, H*0.30, W*0.25, 160, 50, 255, 0.35);
+    // Electric blue — right
+    blob(W*0.74, H*0.36, W*0.36, 20,  90, 240, 0.52);
+    blob(W*0.82, H*0.54, W*0.26, 10,  60, 210, 0.40);
+    blob(W*0.68, H*0.22, W*0.22, 40, 100, 255, 0.38);
+    // Violet bridge across the middle
+    blob(W*0.50, H*0.50, W*0.35, 100, 30, 200, 0.42);
+    blob(W*0.55, H*0.38, W*0.22, 120, 40, 220, 0.30);
+    // Teal/cyan accent — bottom
+    blob(W*0.38, H*0.80, W*0.28, 0,  180, 200, 0.38);
+    blob(W*0.62, H*0.75, W*0.22, 0,  160, 190, 0.30);
+    // Hot magenta — top right accent
+    blob(W*0.80, H*0.16, W*0.22, 200, 20, 160, 0.35);
+    blob(W*0.72, H*0.10, W*0.18, 180, 10, 140, 0.28);
+    // Blue haze sweeping top
+    blob(W*0.50, H*0.08, W*0.60, 15,  50, 180, 0.35);
+    // Extra depth — dark centre hint of a galaxy core
+    blob(W*0.48, H*0.46, W*0.12, 200, 180, 255, 0.50);
+
+    // --- Bright star cluster glow at centre ---
+    ctx.globalCompositeOperation = 'lighter';
+    const cluster = ctx.createRadialGradient(W*0.50, H*0.44, 0, W*0.50, H*0.44, W*0.22);
+    cluster.addColorStop(0,   'rgba(200,180,255,0.30)');
+    cluster.addColorStop(0.4, 'rgba(120,90,220,0.12)');
+    cluster.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = cluster;
+    ctx.fillRect(0, 0, W, H);
+
+    // --- Dust lanes — dark curved streaks for realism ---
+    ctx.globalCompositeOperation = 'source-over';
+    function dustLane(x1, y1, cpx, cpy, x2, y2, width, alpha) {
+      const g = ctx.createLinearGradient(x1, y1, x2, y2);
+      g.addColorStop(0,   `rgba(1,0,10,0)`);
+      g.addColorStop(0.3, `rgba(1,0,10,${alpha})`);
+      g.addColorStop(0.7, `rgba(1,0,10,${alpha})`);
+      g.addColorStop(1,   `rgba(1,0,10,0)`);
+      ctx.strokeStyle = g;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.quadraticCurveTo(cpx, cpy, x2, y2);
+      ctx.stroke();
+    }
+    dustLane(W*0.05, H*0.28, W*0.42, H*0.38, W*0.75, H*0.62, W*0.09, 0.45);
+    dustLane(W*0.25, H*0.18, W*0.55, H*0.30, W*0.92, H*0.68, W*0.07, 0.35);
+
+    // --- Tiny background stars sprinkled in ---
+    ctx.globalCompositeOperation = 'screen';
+    const seed = 42;
+    for (let i = 0; i < 600; i++) {
+      // deterministic-ish via sin hash
+      const sx = (Math.sin(i * 127.1 + seed) * 0.5 + 0.5) * W;
+      const sy = (Math.sin(i * 311.7 + seed) * 0.5 + 0.5) * H;
+      const sr = 0.4 + (Math.sin(i * 74.3) * 0.5 + 0.5) * 1.2;
+      const sa = 0.15 + (Math.sin(i * 53.1) * 0.5 + 0.5) * 0.55;
+      // colour varies: mostly white/blue, occasional warm
+      const warm = Math.sin(i * 19.7) > 0.7;
+      const R = warm ? 255 : 200 + Math.floor((Math.sin(i*31)*0.5+0.5)*55);
+      const G = warm ? 220 : 200 + Math.floor((Math.sin(i*41)*0.5+0.5)*55);
+      const B = warm ? 160 : 240;
+      ctx.fillStyle = `rgba(${R},${G},${B},${sa.toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  paint();
+  window.addEventListener('resize', paint);
+})();
+
+// ===================
 //  Three.js Scene
 // ===================
 const scene = new THREE.Scene();
@@ -20,7 +128,7 @@ if (window.innerWidth < 720) {
 
 scene.add(camera);
 
-const renderer  = new THREE.WebGLRenderer({ antialias: true });
+const renderer  = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -61,16 +169,16 @@ let focusOnMoon   = false;
 let satellite = null;
 
 let currentMoonIndex = 3; // default if you want one pre-picked
-const SECTION_TO_MOON = { projects: 0, work: 1, contact: 2 };
-const MOON_TO_SECTION = { 0: "projects", 1: "work", 2: "contact" };
+const SECTION_TO_MOON = { bioinformatics: 0, srs: 1, cv: 2, work: 3, contact: 4 };
+const MOON_TO_SECTION = { 0: "bioinformatics", 1: "srs", 2: "cv", 3: "work", 4: "contact" };
 
 // --- INTRO DOLLY: camera starts far and glides to "home" ---
 let introActive = true;
 const intro = {
   t: 0,
-  duration: 9,                               // seconds
-  startPos: new THREE.Vector3(0, 6, 305),       // starting camera position
-  startTarget: new THREE.Vector3(0, 1, 0.25)      // starting look-at target
+  duration: 9,
+  startPos: new THREE.Vector3(0, 6, 305),
+  startTarget: new THREE.Vector3(0, 1, 0.25)
 };
 // ease helper
 function easeInOutCubic(x){ return x<0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; }
@@ -99,67 +207,126 @@ const loader = new THREE.TextureLoader();
 
 
 // 1) Use a deep space color as the renderer background
-renderer.setClearColor(0x071122, 1); // dark blue
+renderer.setClearColor(0x000000, 0); // transparent — nebula canvas shows behind
+renderer.alpha = true;
 
 // 2) Star sprite generators (CanvasTexture)
-function makeStarTexture(hex, innerAlpha = 0.8) {
-  const size = 32;
+
+// Soft glow disc — for background dust layer
+function makeGlowTexture(hex, size = 32) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
-
   const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
-  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0.00, `rgba(${r},${g},${b},${innerAlpha})`);
-  grad.addColorStop(0.22, `rgba(${r},${g},${b},0.22)`);
+  const grad = ctx.createRadialGradient(size/2,size/2,0, size/2,size/2,size/2);
+  grad.addColorStop(0.00, `rgba(${r},${g},${b},1.0)`);
+  grad.addColorStop(0.15, `rgba(${r},${g},${b},0.5)`);
+  grad.addColorStop(0.45, `rgba(${r},${g},${b},0.08)`);
   grad.addColorStop(1.00, `rgba(0,0,0,0)`);
-
   ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
-  ctx.fill();
-
+  ctx.fillRect(0, 0, size, size);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return tex;
 }
 
-// CRISP star: white-hot core + thin colored rim
-function makeCrispStarTexture(hex, size = 16) {
+// Crisp pinpoint star — white-hot core, tight halo, colored tint
+function makePinTexture(hex, size = 64) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   const ctx = c.getContext('2d');
-
-  const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
   const cx = size / 2, cy = size / 2;
+  const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
 
-  ctx.clearRect(0, 0, size, size);
+  // Outer soft halo
+  const halo = ctx.createRadialGradient(cx,cy,0, cx,cy,cx);
+  halo.addColorStop(0.00, `rgba(${r},${g},${b},0.55)`);
+  halo.addColorStop(0.18, `rgba(${r},${g},${b},0.18)`);
+  halo.addColorStop(0.50, `rgba(${r},${g},${b},0.04)`);
+  halo.addColorStop(1.00, `rgba(0,0,0,0)`);
+  ctx.fillStyle = halo;
+  ctx.fillRect(0, 0, size, size);
 
-  const core = Math.max(1, Math.floor(size * 0.22));
-  ctx.fillStyle = 'rgba(255,255,255,1)';
+  // Bright core
+  const core = ctx.createRadialGradient(cx,cy,0, cx,cy,cx*0.12);
+  core.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+  core.addColorStop(0.4, `rgba(${r},${g},${b},0.9)`);
+  core.addColorStop(1.0, `rgba(${r},${g},${b},0)`);
+  ctx.fillStyle = core;
   ctx.beginPath();
-  ctx.arc(cx, cy, core, 0, Math.PI * 2);
+  ctx.arc(cx, cy, cx*0.12, 0, Math.PI*2);
   ctx.fill();
-
-  ctx.strokeStyle = `rgba(${r},${g},${b},1)`;
-  ctx.lineWidth = Math.max(1, Math.round(size * 0.06));
-  ctx.beginPath();
-  ctx.arc(cx, cy, core + ctx.lineWidth * 0.6, 0, Math.PI * 2);
-  ctx.stroke();
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.NearestFilter;
   tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return tex;
 }
 
-const starTexWhite        = makeStarTexture(0xffffff, 1.0);
-const starTexCyan         = makeStarTexture(0x00ffff, 1.0);
-const starTexRedSharp     = makeStarTexture(0xff5544, 5);   // FIXED: use crisp
-const starTexOrangeSharp  = makeStarTexture(0xffaa33, 5);   // FIXED: use crisp
+// Hero star — bright with 4-point diffraction spikes
+function makeHeroTexture(hex, size = 128) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const cx = size / 2, cy = size / 2;
+  const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
+
+  // Wide outer glow
+  const outer = ctx.createRadialGradient(cx,cy,0, cx,cy,cx);
+  outer.addColorStop(0.00, `rgba(${r},${g},${b},0.7)`);
+  outer.addColorStop(0.12, `rgba(${r},${g},${b},0.25)`);
+  outer.addColorStop(0.35, `rgba(${r},${g},${b},0.06)`);
+  outer.addColorStop(1.00, 'rgba(0,0,0,0)');
+  ctx.fillStyle = outer;
+  ctx.fillRect(0, 0, size, size);
+
+  // 4-point diffraction spikes
+  ctx.save();
+  for (let s = 0; s < 4; s++) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(s * Math.PI / 2);
+    const spike = ctx.createLinearGradient(0, 0, cx * 0.85, 0);
+    spike.addColorStop(0.0, 'rgba(255,255,255,0.9)');
+    spike.addColorStop(0.3, `rgba(${r},${g},${b},0.35)`);
+    spike.addColorStop(1.0, 'rgba(0,0,0,0)');
+    ctx.fillStyle = spike;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(cx * 0.85, -1.5);
+    ctx.lineTo(cx * 0.85,  1.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Blazing white core
+  const core = ctx.createRadialGradient(cx,cy,0, cx,cy,cx*0.08);
+  core.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+  core.addColorStop(0.5, `rgba(${r},${g},${b},0.8)`);
+  core.addColorStop(1.0, 'rgba(0,0,0,0)');
+  ctx.fillStyle = core;
+  ctx.beginPath();
+  ctx.arc(cx, cy, cx*0.08, 0, Math.PI*2);
+  ctx.fill();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+// Pre-build all textures
+const texGlowWhite  = makeGlowTexture(0xffffff);
+const texGlowBlue   = makeGlowTexture(0xaaccff);
+const texPinWhite   = makePinTexture(0xffffff);
+const texPinBlue    = makePinTexture(0xb8d4ff);
+const texPinOrange  = makePinTexture(0xffcc88);
+const texPinRed     = makePinTexture(0xff8866);
+const texHeroWhite  = makeHeroTexture(0xffffff);
+const texHeroBlue   = makeHeroTexture(0xaaddff);
+const texHeroYellow = makeHeroTexture(0xffe080);
 
 // --- Twinkle shader material ---
 function makeTwinklePointsMaterial(texture, {
@@ -309,105 +476,429 @@ scene.add(starfieldGroup);
 
 const IS_MOBILE = window.innerWidth < 720;
 
-// fewer points
-const WHITE_COUNT  = IS_MOBILE ? 600 : 1000;
-const CYAN_COUNT   = IS_MOBILE ? 120 : 200;
-const RED_COUNT    = IS_MOBILE ? 25  : 50;
-const ORANGE_COUNT = IS_MOBILE ? 30  : 60;
-
-// Stars
-const starsWhite = makeStars({
-  count: WHITE_COUNT,
-  minR: 40, maxR: 250,
-  sizePx: 10,
-  texture: starTexWhite,
-  opacity: 0.8,
-  additive: true
+// ── Layer 1: Background dust — thousands of tiny dim stars ──
+// Gives the Milky Way density feel
+const starsDust = makeStars({
+  count:       IS_MOBILE ? 1800 : 4000,
+  minR: 60, maxR: 280,
+  sizePx:      IS_MOBILE ? 1.2 : 1.5,
+  texture:     texGlowWhite,
+  opacity:     0.52,
+  additive:    true,
+  twinkleRatio: 0.0
 });
-const starsCyan = makeStars({
-  count: CYAN_COUNT,
-  minR: 10, maxR: 180,
-  sizePx: 8,
-  texture: starTexCyan,
-  opacity: 0.65,
-  additive: true
+
+// ── Layer 2: Blue-tinted dust (cooler distant stars) ──
+const starsDustBlue = makeStars({
+  count:       IS_MOBILE ? 600 : 1400,
+  minR: 80, maxR: 300,
+  sizePx:      IS_MOBILE ? 1.0 : 1.3,
+  texture:     texGlowBlue,
+  opacity:     0.32,
+  additive:    true,
+  twinkleRatio: 0.0
+});
+
+// ── Layer 3: Mid-field crisp white stars ──
+const starsMidWhite = makeStars({
+  count:       IS_MOBILE ? 300 : 700,
+  minR: 40, maxR: 200,
+  sizePx:      IS_MOBILE ? 2.5 : 3.2,
+  texture:     texPinWhite,
+  opacity:     0.92,
+  additive:    true,
+  twinkleRatio: 0.35
+});
+
+// ── Layer 4: Mid-field blue stars (hot O/B type) ──
+const starsMidBlue = makeStars({
+  count:       IS_MOBILE ? 80 : 200,
+  minR: 40, maxR: 180,
+  sizePx:      IS_MOBILE ? 2.2 : 2.8,
+  texture:     texPinBlue,
+  opacity:     0.88,
+  additive:    true,
+  twinkleRatio: 0.4
+});
+
+// ── Layer 5: Orange/red foreground stars (K/M type) ──
+const starsOrange = makeStars({
+  count:       IS_MOBILE ? 40 : 100,
+  minR: 30, maxR: 120,
+  sizePx:      IS_MOBILE ? 2.0 : 2.6,
+  texture:     texPinOrange,
+  opacity:     0.82,
+  additive:    true,
+  twinkleRatio: 0.5
 });
 const starsRed = makeStars({
-  count: RED_COUNT,
-  minR: 10, maxR: 50,
-  sizePx: 2,                 // smaller
-  texture: starTexRedSharp,
-  opacity: 0.55,
-  additive: true,
-  twinkleRatio: 0.18
+  count:       IS_MOBILE ? 20 : 55,
+  minR: 25, maxR: 100,
+  sizePx:      IS_MOBILE ? 1.8 : 2.4,
+  texture:     texPinRed,
+  opacity:     0.78,
+  additive:    true,
+  twinkleRatio: 0.5
 });
 
-const starsOrange = makeStars({
-  count: ORANGE_COUNT,
-  minR: 10, maxR: 50,
-  sizePx: 2,                 // smaller
-  texture: starTexOrangeSharp,
-  opacity: 0.65,
-  additive: true,
-  twinkleRatio: 0.18
+// ── Layer 6: Hero stars — bright with diffraction spikes ──
+// Just a handful — they should feel special
+const starsHeroWhite = makeStars({
+  count:       IS_MOBILE ? 4 : 9,
+  minR: 35, maxR: 160,
+  sizePx:      IS_MOBILE ? 10 : 14,
+  texture:     texHeroWhite,
+  opacity:     0.95,
+  additive:    true,
+  twinkleRatio: 1.0
+});
+const starsHeroBlue = makeStars({
+  count:       IS_MOBILE ? 3 : 7,
+  minR: 40, maxR: 180,
+  sizePx:      IS_MOBILE ? 9 : 12,
+  texture:     texHeroBlue,
+  opacity:     0.9,
+  additive:    true,
+  twinkleRatio: 1.0
+});
+const starsHeroYellow = makeStars({
+  count:       IS_MOBILE ? 2 : 5,
+  minR: 30, maxR: 140,
+  sizePx:      IS_MOBILE ? 8 : 11,
+  texture:     texHeroYellow,
+  opacity:     0.85,
+  additive:    true,
+  twinkleRatio: 1.0
 });
 
-starfieldGroup.add(starsCyan, starsWhite, starsRed, starsOrange);
+// Add all layers back-to-front (dust first, hero stars last)
+starfieldGroup.add(
+  starsDust, starsDustBlue,
+  starsMidWhite, starsMidBlue,
+  starsOrange, starsRed,
+  starsHeroWhite, starsHeroBlue, starsHeroYellow
+);
 
-// Halo layers (fast glow)
-const haloWhite  = makeHaloLayer(starsWhite,  starTexWhite,        2.2, 0.32);
-const haloCyan   = makeHaloLayer(starsCyan,   starTexCyan,         2.2, 0.28);
-const haloRed    = makeHaloLayer(starsRed,    starTexRedSharp,     2.1, 0.26);
-const haloOrange = makeHaloLayer(starsOrange, starTexOrangeSharp,  2.1, 0.30);
-starfieldGroup.add(haloWhite, haloCyan, haloRed, haloOrange);
 
-// Optional: gentle drift/rotation
-const _starSpin = { y: 0.00015, x: 0.00003 };
+// Halo layers only on the crisp/hero stars (not dust — would smear)
+const haloMidWhite  = makeHaloLayer(starsMidWhite,   texGlowWhite, 2.8, 0.35);
+const haloMidBlue   = makeHaloLayer(starsMidBlue,    texGlowBlue,  2.8, 0.30);
+const haloHeroWhite = makeHaloLayer(starsHeroWhite,  texGlowWhite, 3.5, 0.40);
+const haloHeroBlue  = makeHaloLayer(starsHeroBlue,   texGlowBlue,  3.5, 0.38);
+const haloHeroYellow= makeHaloLayer(starsHeroYellow, makeGlowTexture(0xffe090), 3.5, 0.35);
+starfieldGroup.add(haloMidWhite, haloMidBlue, haloHeroWhite, haloHeroBlue, haloHeroYellow);
+
+// Gentle drift
+const _starSpin = { y: 0.00012, x: 0.00002 };
+
+
+
+
+
+// ===================
+//  Shooting Stars
+// ===================
+const SHOOT_POOL = 6;   // max simultaneous meteors
+const shooters = [];
+
+function makeShooter() {
+  // Trail: a thin tapered line built from a BufferGeometry
+  const segments = 28;
+  const positions = new Float32Array(segments * 3);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  // Use a line with vertexColors for fade
+  const colors = new Float32Array(segments * 3);
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const mat = new THREE.LineBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    linewidth: 1
+  });
+
+  const line = new THREE.Line(geo, mat);
+  line.visible = false;
+  line.frustumCulled = false;
+  scene.add(line);
+
+  return {
+    line,
+    active: false,
+    // spawn fields filled on activation
+    ox: 0, oy: 0, oz: 0,   // origin
+    dx: 0, dy: 0, dz: 0,   // direction (unit)
+    speed: 0,
+    length: 0,
+    progress: 0,            // 0 = just spawned, 1 = finished
+    duration: 0,
+    nextSpawn: Math.random() * 5   // seconds until first fire
+  };
+}
+
+for (let i = 0; i < SHOOT_POOL; i++) shooters.push(makeShooter());
+
+function spawnShooter(s) {
+  // Random point on a sphere shell at r=120..200, biased toward front hemisphere
+  const theta = Math.random() * Math.PI * 2;
+  const phi   = Math.acos(0.3 + Math.random() * 0.7); // upper hemisphere bias
+  const r     = 120 + Math.random() * 80;
+  s.ox = r * Math.sin(phi) * Math.cos(theta);
+  s.oy = r * Math.cos(phi) * 0.6;           // flatten vertically
+  s.oz = r * Math.sin(phi) * Math.sin(theta);
+
+  // Direction: slight downward drift + random lateral
+  const spread = 0.35;
+  s.dx = (Math.random() - 0.5) * spread;
+  s.dy = -(0.5 + Math.random() * 0.5);
+  s.dz = (Math.random() - 0.5) * spread;
+  // Normalise
+  const len = Math.sqrt(s.dx*s.dx + s.dy*s.dy + s.dz*s.dz);
+  s.dx /= len; s.dy /= len; s.dz /= len;
+
+  s.speed    = 60 + Math.random() * 80;     // units/sec
+  s.length   = 18 + Math.random() * 22;     // trail length
+  s.duration = s.length / s.speed + (s.length * 2) / s.speed; // travel + fade
+  s.progress = 0;
+  s.active   = true;
+  s.line.visible = true;
+}
+
+function updateShooter(s, dt) {
+  if (!s.active) {
+    s.nextSpawn -= dt;
+    if (s.nextSpawn <= 0) {
+      spawnShooter(s);
+      s.nextSpawn = 3.5 + Math.random() * 6.5; // 3.5–10 s between shots
+    }
+    return;
+  }
+
+  s.progress += dt;
+  const travelled = s.progress * s.speed;  // how far the HEAD has moved
+  const segments = 28;
+  const positions = s.line.geometry.attributes.position.array;
+  const colors    = s.line.geometry.attributes.color.array;
+
+  for (let i = 0; i < segments; i++) {
+    // Each segment is at a fraction behind the head
+    const frac = i / (segments - 1);           // 0 = head, 1 = tail end
+    const dist = travelled - frac * s.length;  // distance from origin
+
+    const px = s.ox + s.dx * dist;
+    const py = s.oy + s.dy * dist;
+    const pz = s.oz + s.dz * dist;
+    positions[i*3]   = px;
+    positions[i*3+1] = py;
+    positions[i*3+2] = pz;
+
+    // Brightness: head bright, tail fades; overall fades in + out
+    const headBright  = Math.max(0, 1 - frac * frac);   // squared falloff
+    const lifeIn      = Math.min(1, s.progress / 0.08); // 80ms fade-in
+    const lifeOut     = Math.max(0, 1 - Math.max(0, (travelled - s.length) / s.length));
+    const brightness  = headBright * lifeIn * lifeOut;
+
+    // Warm white → slight blue tint on tail
+    colors[i*3]   = 0.9 + 0.1 * headBright;   // R
+    colors[i*3+1] = 0.92 + 0.08 * headBright; // G
+    colors[i*3+2] = 1.0;                       // B
+    // Use opacity via overall scale trick — encode in G channel brightness
+    colors[i*3]   *= brightness;
+    colors[i*3+1] *= brightness;
+    colors[i*3+2] *= brightness;
+  }
+
+  s.line.geometry.attributes.position.needsUpdate = true;
+  s.line.geometry.attributes.color.needsUpdate    = true;
+
+  // Done when tail has passed
+  if (travelled > s.length * 2.2) {
+    s.active = false;
+    s.line.visible = false;
+  }
+}
 
 // ---- Sun ----
 const sunGeo = new THREE.SphereGeometry(2, 64, 64);
-const sunMat = new THREE.MeshStandardMaterial({
-  color: 0xffcc33,
-  emissive: 0x775500,
-  emissiveIntensity: 0.35,
-  metalness: 0,
-  roughness: 1
+const sunMat = new THREE.MeshBasicMaterial({
+  color: 0xfffde0,   // almost white-hot at the surface
 });
 const sphere = new THREE.Mesh(sunGeo, sunMat);
-// (Optional texture)
-// const sunTexture = loader.load("8k_sun.jpg", t => { t.colorSpace = THREE.SRGBColorSpace; sunMat.map = t; sunMat.needsUpdate = true; });
 scene.add(sphere);
+
+// ---- Sun Glow Layers ----
+// Each is a slightly larger sphere with AdditiveBlending — stacks to create corona
+
+function makeSunGlowTexture(innerCol, outerCol, size = 256) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const cx = size / 2;
+  const grad = ctx.createRadialGradient(cx,cx, 0, cx,cx, cx);
+  grad.addColorStop(0.00, innerCol);
+  grad.addColorStop(0.25, outerCol);
+  grad.addColorStop(0.60, 'rgba(255,140,0,0.04)');
+  grad.addColorStop(1.00, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Sprite-based glow (always faces camera)
+const sunGlowMat = new THREE.SpriteMaterial({
+  map: makeSunGlowTexture(
+    'rgba(255,220,80,0.92)',
+    'rgba(255,120,10,0.30)'
+  ),
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 1.0
+});
+const sunGlowSprite = new THREE.Sprite(sunGlowMat);
+sunGlowSprite.scale.set(14, 14, 1);
+scene.add(sunGlowSprite);
+
+// Second wider softer halo
+const sunHaloMat = new THREE.SpriteMaterial({
+  map: makeSunGlowTexture(
+    'rgba(255,180,40,0.35)',
+    'rgba(255,80,0,0.08)'
+  ),
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.85
+});
+const sunHaloSprite = new THREE.Sprite(sunHaloMat);
+sunHaloSprite.scale.set(28, 28, 1);
+scene.add(sunHaloSprite);
+
+// Outermost atmospheric scatter — very faint orange
+const sunAtmoMat = new THREE.SpriteMaterial({
+  map: makeSunGlowTexture(
+    'rgba(255,120,20,0.12)',
+    'rgba(255,60,0,0.02)'
+  ),
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.7
+});
+const sunAtmoSprite = new THREE.Sprite(sunAtmoMat);
+sunAtmoSprite.scale.set(52, 52, 1);
+scene.add(sunAtmoSprite);
+
+// Point light ON the sun so it illuminates moons
+const sunLight = new THREE.PointLight(0xffcc55, 2.5, 80);
+scene.add(sunLight);
 
 // ===================
 //  Moons
 // ===================
 const moons = [];
-const moonCount = 5;
+
+// Helper: auto-scale a loaded GLB so its bounding sphere fits targetRadius
+function autoScale(obj, targetRadius) {
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const currentRadius = Math.max(size.x, size.y, size.z) / 2;
+  if (currentRadius > 0) {
+    const s = targetRadius / currentRadius;
+    obj.scale.set(s, s, s);
+  }
+}
+
+// ── Moons 0 & 2: GLB objects (bio / cv) ──────────────────────
+// These are placeholder spheres that get replaced once the GLB loads
+const glbMoonDefs = [
+  { index: 0, file: 'bio_object.glb',  section: 'bioinformatics' },
+  { index: 2, file: 'cv_object.glb',   section: 'cv' }
+];
+
+// ── Create all 5 moons as spheres first ──────────────────────
 const moonTexturePaths = [
-  "2k_jupiter.jpg",
-  "2k_mars.jpg",
-  "2k_venus.jpg",
-  "2k_earth_daymap.jpg",
-  "2k_neptune.jpg"
+  "2k_jupiter.jpg",  // 0 — bio (replaced by GLB)
+  "2k_mars.jpg",     // 1 — remote sensing
+  "2k_venus.jpg",    // 2 — cv (replaced by GLB)
+  "2k_earth_daymap.jpg", // 3 — work
+  "2k_neptune.jpg"   // 4 — contact
 ];
 const moonTextures = moonTexturePaths.map(p => loader.load(p));
 
-for (let i = 0; i < moonCount; i++) {
-  const size = 0.2 + Math.random() * 0.65;
+const moonSections = ['bioinformatics', 'srs', 'cv', 'work', 'contact'];
+const moonRadii    = [5, 6.5, 8, 9.5, 11];
+const moonSpeeds   = [0.001, 0.0015, 0.0008, 0.0005, 0.0003];
+
+for (let i = 0; i < 5; i++) {
+  const size = 0.35 + (i % 3) * 0.15;
   const geo  = new THREE.SphereGeometry(size, 16, 16);
-  const mat  = new THREE.MeshStandardMaterial({ map: moonTextures[i % moonTextures.length] });
+  const mat  = new THREE.MeshStandardMaterial({ map: moonTextures[i] });
   const moon = new THREE.Mesh(geo, mat);
   moon.userData = {
-    angle:  Math.random() * Math.PI * 2,
-    radius: 5 + i * 1.5,
-    speed:  0.001 + i * 0.0005
+    angle:   (i / 5) * Math.PI * 2,
+    radius:  moonRadii[i],
+    speed:   moonSpeeds[i],
+    section: moonSections[i],
+    isGLB:   false
   };
-  if (i === 0) moon.userData.section = "projects";
-  if (i === 1) moon.userData.section = "work";
-  if (i === 2) moon.userData.section = "contact";
-
   moons.push(moon);
   scene.add(moon);
+}
+
+// ── Load GLB objects for bio (0) and cv (2) ──────────────────
+{
+  const gltfLoader  = new THREE.GLTFLoader();
+  const dracoLoader = new THREE.DRACOLoader();
+  dracoLoader.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/libs/draco/");
+  gltfLoader.setDRACOLoader(dracoLoader);
+
+  glbMoonDefs.forEach(({ index, file, section }) => {
+    gltfLoader.load(file, (gltf) => {
+      const obj = gltf.scene;
+
+      // Auto-scale to match sphere moon size (~0.5 radius)
+      // CV model is extremely large — needs much smaller target
+      const targetR = (file === 'cv_object.glb') ? 0.0055 : 0.55;
+      autoScale(obj, targetR);
+
+      // Store the base scale so pulse animation can be relative to it
+      obj.userData.baseScale = obj.scale.x;
+
+      // Copy orbital data from the placeholder sphere
+      const old = moons[index];
+      obj.userData = { ...old.userData, isGLB: true };
+
+      // Position at same place as old sphere
+      obj.position.copy(old.position);
+
+      // Rotate 90 degrees so model faces correctly
+      obj.rotation.x = Math.PI / 2;
+
+      // Transfer any CSS2D labels from old sphere to new GLB
+      old.children
+        .filter(c => c.isCSS2DObject)
+        .forEach(label => {
+          old.remove(label);
+          obj.add(label);
+        });
+
+      // Remove old sphere, insert GLB
+      scene.remove(old);
+      scene.add(obj);
+      moons[index] = obj;
+
+      console.log(`GLB moon loaded: ${file} (index ${index})`);
+    }, undefined, err => {
+      console.warn(`GLB not found (${file}), keeping sphere:`, err.message);
+    });
+  });
 }
 
 // ===================
@@ -442,25 +933,44 @@ attachLabelToObject(sphere, "Home", () => {
   if (satellite) satellite.visible = false;
 }, 1.2);
 
-// Moon 0 → Projects
+// Moon 0 → Bioinformatics
 if (moons[0]) {
-  attachLabelToObject(moons[0], "Projects", () => {
-    openSection("projects");
+  attachLabelToObject(moons[0], "Bioinformatics", () => {
+    hideAllOverlays();
     focusCameraOnMoon(0);
+    ProjectViewer.open('bioinformatics');
   });
 }
-// Moon 1 → Work
+// Moon 1 → Remote Sensing
 if (moons[1]) {
-  attachLabelToObject(moons[1], "Work", () => {
-    openSection("work");
+  attachLabelToObject(moons[1], "Remote Sensing", () => {
+    hideAllOverlays();
     focusCameraOnMoon(1);
+    ProjectViewer.open('srs');
   });
 }
-// Moon 2 → Get in Touch
+// Moon 2 → Computer Vision
 if (moons[2]) {
-  attachLabelToObject(moons[2], "Get in Touch", () => {
-    openSection("contact");
+  attachLabelToObject(moons[2], "Computer Vision", () => {
+    hideAllOverlays();
     focusCameraOnMoon(2);
+    ProjectViewer.open('cv');
+  });
+}
+// Moon 3 → Work Experience
+if (moons[3]) {
+  attachLabelToObject(moons[3], "Work Experience", () => {
+    hideAllOverlays();
+    focusCameraOnMoon(3);
+    showWorkOverlay();
+  });
+}
+// Moon 4 → Get in Touch
+if (moons[4]) {
+  attachLabelToObject(moons[4], "Get in Touch", () => {
+    hideAllOverlays();
+    focusCameraOnMoon(4);
+    showContactOverlay();
   });
 }
 
@@ -511,8 +1021,10 @@ function hideProjectsOverlay(){
 function showHomeOverlay(){
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.add("open"); el.setAttribute("aria-hidden", "false"); }
+  MissionTerminal.play();
 }
 function hideHomeOverlay(){
+  MissionTerminal.stop();
   const el = document.getElementById("home-overlay");
   if (el) { el.classList.remove("open"); el.setAttribute("aria-hidden", "true"); }
 }
@@ -537,6 +1049,8 @@ function hideAllOverlays(){
   hideHomeOverlay();
   hideWorkOverlay();
   hideContactOverlay();
+  if (typeof SRSViewer    !== 'undefined') SRSViewer.hide();
+  if (typeof ProjectViewer !== 'undefined') ProjectViewer.close();
 }
 
 
@@ -646,8 +1160,8 @@ document.getElementById("home-button")?.addEventListener("click", (e) => {
 document.getElementById("projects-button")?.addEventListener("click", (e) => {
   e.preventDefault();
   hideAllOverlays();
-  showProjectsOverlay();
-  focusCameraOnMoon(SECTION_TO_MOON.projects);
+  focusCameraOnMoon(0);
+  ProjectViewer.open('bioinformatics');
 });
 
 // Optional close buttons if present
@@ -657,15 +1171,15 @@ document.getElementById("home-close")?.addEventListener("click", hideHomeOverlay
 document.getElementById("contact-button")?.addEventListener("click", (e) => {
   e.preventDefault();
   hideAllOverlays();
+  focusCameraOnMoon(4);
   showContactOverlay();
-  focusCameraOnMoon(SECTION_TO_MOON.contact);
 });
 
 document.getElementById("work-button")?.addEventListener("click", (e) => {
   e.preventDefault();
   hideAllOverlays();
+  focusCameraOnMoon(3);
   showWorkOverlay();
-  focusCameraOnMoon(SECTION_TO_MOON.work);
 });
 
 // ===================
@@ -690,7 +1204,7 @@ function animate() {
     if (intro.t >= 1) {
       camera.position.copy(homeCamPos);
       controls.target.copy(homeCamTarget);
-      controls.enabled = true;   // hand back control
+      controls.enabled = true;
       controls.update();
       introActive = false;
     }
@@ -707,16 +1221,41 @@ function animate() {
   // Rotate sun
   sphere.rotation.y += 0.001;
 
+  // Pulse sun glow — subtle breathe effect
+  const sunPulse = 1.0 + 0.06 * Math.sin(t * 0.9);
+  const sunPulse2 = 1.0 + 0.04 * Math.sin(t * 0.6 + 1.2);
+  sunGlowSprite.scale.set(14 * sunPulse,  14 * sunPulse,  1);
+  sunHaloSprite.scale.set(28 * sunPulse2, 28 * sunPulse2, 1);
+  sunAtmoSprite.scale.set(52 * sunPulse,  52 * sunPulse,  1);
+  // MeshBasicMaterial — brightness is pure color, no emissive needed
+
   // Drift stars
   starfieldGroup.rotation.y += _starSpin.y;
   starfieldGroup.rotation.x += _starSpin.x;
 
+  // Shooting stars
+  const dt = Math.min(0.05, 1/60);   // capped delta — safe on slow frames
+  shooters.forEach(s => updateShooter(s, dt));
+
   // Orbit moons
-  moons.forEach(moon => {
+  moons.forEach((moon, idx) => {
     moon.userData.angle += moon.userData.speed;
     const x = Math.cos(moon.userData.angle) * moon.userData.radius;
     const z = Math.sin(moon.userData.angle) * moon.userData.radius;
     moon.position.set(x, 0, z);
+
+    // CV moon (index 2) — continuous self-rotation
+    if (idx === 2 && moon.userData.isGLB) {
+      moon.rotation.y += 0.018;
+      moon.rotation.z += 0.008;
+    }
+
+    // Bio moon (index 0) — dramatic breathing pulse
+    if (idx === 0 && moon.userData.isGLB && moon.userData.baseScale) {
+      const base  = moon.userData.baseScale;
+      const pulse = base * (1.0 + 0.6 * Math.sin(t * 1.2));
+      moon.scale.set(pulse, pulse, pulse);
+    }
   });
 
   // Hover highlight
@@ -830,7 +1369,11 @@ window.addEventListener("click", () => {
     if (idx !== -1) {
       focusCameraOnMoon(idx);
       const section = MOON_TO_SECTION[idx] || hit.userData.section;
-      if (section) openSection(section);
+      if      (section === 'bioinformatics') { hideAllOverlays(); focusCameraOnMoon(idx); ProjectViewer.open('bioinformatics'); }
+      else if (section === 'srs')           { hideAllOverlays(); focusCameraOnMoon(idx); ProjectViewer.open('srs'); }
+      else if (section === 'cv')            { hideAllOverlays(); focusCameraOnMoon(idx); ProjectViewer.open('cv'); }
+      else if (section === 'work')          { hideAllOverlays(); focusCameraOnMoon(idx); showWorkOverlay(); }
+      else if (section === 'contact')       { hideAllOverlays(); focusCameraOnMoon(idx); showContactOverlay(); }
       else hideAllOverlays();
     }
     return;
@@ -850,11 +1393,11 @@ const CATEGORY_PROJECTS = {
     { title: "miRNA in breast cancer", url: "https://www.frontiersin.org/journals/immunology/articles/10.3389/fimmu.2024.1333563/full", img: "mb.png" }
   ],
   cv: [
-    { title: "Self-driving car sensor fusion", img: "self_d.jpg", desc: "Integrating LiDAR, radar, and camera data for robust perception in autonomous vehicles." },
+    { title: "AI-Driven Autonomous Driving", img: "self_d.jpg", desc: "Improved an object detection model under hard conditions — low light, rain, and occlusion — for robust autonomous vehicle perception." },
     { title: "Nucleus-to-cytoplasm ratio in blood images", img: "blood.png", desc: "Segmentation and quantitative analysis of blood cell images for diagnostic research." },
-    { title: "CT Scan Foreign Object detection", img: "fro.png", desc: "Machine learning approach for segmentation multiple dual energy objects from CT scan." },
-    { title: "Pose estimation on cattle", img: "pos.mp4", desc: "Computer vision pipeline for detecting and estimating cattle body poses from camera data." },
-    { title: "Computer Vision for Zebrafish Tracking", img: "traking.mp4", desc: "Computer vision pipeline for Zebrafish Tracking." }
+    { title: "CT Scan Foreign Object Detection", img: "fro.png", desc: "A fast-pass approach using few-shot learning to train a foreign object detection model directly on CT scan data with minimal annotations." },
+    { title: "Pose Estimation on Cattle", img: "pos.mp4", desc: "Built computer vision software to detect and score BCS (Body Condition Score) and lameness using joint tracking on livestock." },
+    { title: "Zebrafish Tracking", img: "traking.mp4", desc: "Built a pipeline using only classical image processing — zero AI — to track a zebrafish through microscopic video footage." }
   ],
   srs: [
     { title: "SPEXone georegistration", img: "spex_1.png", desc: "Georegistration of SPEX airborne data using keypoint registration." },
@@ -866,6 +1409,7 @@ const CATEGORY_PROJECTS = {
 //  Desktop Drawer
 // ===================
 function openProjectsDrawer(categoryKey){
+  if (categoryKey === 'srs') { SRSViewer.show(); return; }
   const overlay = document.getElementById('projects-overlay');
   const drawer  = document.getElementById('projects-drawer');
   const list    = document.getElementById('project-list');
@@ -1063,114 +1607,29 @@ function fillPanel(panel, key) {
 // ===================
 //  Start!
 animate();
-const cursor = document.getElementById("astro-cursor");
-
-let mouseX = window.innerWidth / 2;
-let mouseY = window.innerHeight / 2;
-
-let posX = mouseX;
-let posY = mouseY;
-
-let lastX = mouseX;
-let lastY = mouseY;
-
-let currentAngle = 0;
-
-document.addEventListener("mousemove", (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-});
-
-function animateCursor() {
-  // Smooth follow (inertia)
-  const followSpeed = 0.12;
-  posX += (mouseX - posX) * followSpeed;
-  posY += (mouseY - posY) * followSpeed;
-
-  // Direction
-  const dx = mouseX - lastX;
-  const dy = mouseY - lastY;
-
-  // Smooth rotation
-  const targetAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-  currentAngle += (targetAngle - currentAngle) * 0.15;
-
-  // Gentle wobble
-  const wobble = Math.sin(Date.now() * 0.006) * 2;
-
-  cursor.style.transform = `
-    translate(${posX}px, ${posY}px)
-    rotate(${currentAngle + wobble}deg)
-  `;
-
-  lastX = mouseX;
-  lastY = mouseY;
-
-  requestAnimationFrame(animateCursor);
-}
-
-animateCursor();
 
 
 // ===================
 //  AI Chat UI Wiring
 // ===================
 
-// Grab elements
 const aiToggle = document.getElementById("ai-toggle");
 const aiChat   = document.getElementById("ai-chat");
 const aiMsgs   = document.getElementById("ai-messages");
 const aiInput  = document.getElementById("ai-text");
 const aiSend   = document.getElementById("ai-send");
-
 const aiRobot  = document.getElementById("ai-robot");
 const robotImg = document.getElementById("robot-img");
 
-// Safety check
-if (!aiToggle || !aiChat || !aiMsgs || !aiInput || !aiSend || !aiRobot || !robotImg) {
-  console.error("❌ AI chat elements not found");
-} else {
-  console.log("✅ AI chat elements found");
-}
-
-// ===================
-//  Robot helpers
-// ===================
-
-function robotIdle() {
-  aiRobot.style.display = "flex";
-  robotImg.src = "rocket.gif";
-}
-
-function robotSpeak() {
-  aiRobot.style.display = "flex";
-  robotImg.src = "rocket.gif";
-}
-
-function robotHide() {
-  aiRobot.style.display = "none";
-}
-
-// ===================
-//  Toggle chat open / close
-// ===================
+function robotIdle()  { if(aiRobot) aiRobot.style.display = "flex"; if(robotImg) robotImg.src = "rocket.gif"; }
+function robotHide()  { if(aiRobot) aiRobot.style.display = "none"; }
 
 aiToggle.addEventListener("click", () => {
   const isOpen = aiChat.style.display === "flex";
-
   aiChat.style.display = isOpen ? "none" : "flex";
   aiChat.setAttribute("aria-hidden", isOpen ? "true" : "false");
-
-  if (!isOpen) {
-    robotIdle();   // show idle robot when opening
-  } else {
-    robotHide();   // hide robot when closing
-  }
+  if (!isOpen) robotIdle(); else robotHide();
 });
-
-// ===================
-//  Browser LLM (transformers.js)
-// ===================
 
 let aiBusy = false;
 let llm = null;
@@ -1179,79 +1638,509 @@ let loadingModel = false;
 async function loadLLM() {
   if (llm || loadingModel) return;
   loadingModel = true;
-
-  aiMsgs.innerHTML += `<div><em>Loading AI model (first time only)…</em></div>`;
+  aiMsgs.innerHTML += `<div><em>Loading AI model…</em></div>`;
   aiMsgs.scrollTop = aiMsgs.scrollHeight;
-
-  llm = await window.pipeline(
-    "text2text-generation",
-    "Xenova/flan-t5-small"
-  );
-
+  llm = await window.pipeline("text2text-generation", "Xenova/flan-t5-small");
   aiMsgs.innerHTML += `<div><em>AI ready ✅</em></div>`;
   aiMsgs.scrollTop = aiMsgs.scrollHeight;
 }
 
-// ===================
-//  Send AI Message
-// ===================
-
 async function sendAIMessage() {
   if (aiBusy) return;
-
   const text = aiInput.value.trim();
   if (!text) return;
-
   aiBusy = true;
-
-  // User message
   aiMsgs.innerHTML += `<div><strong>You:</strong> ${text}</div>`;
   aiInput.value = "";
   aiMsgs.scrollTop = aiMsgs.scrollHeight;
-
   await loadLLM();
-
-  // Robot speaking animation
-  robotSpeak();
-
-  // Small delay for realism
-  await new Promise(r => setTimeout(r, 300));
-
-  // Thinking indicator
+  robotIdle();
   const thinking = document.createElement("div");
-  thinking.innerHTML = "<em>🤖 thinking...</em>";
+  thinking.innerHTML = "<em>thinking...</em>";
   aiMsgs.appendChild(thinking);
   aiMsgs.scrollTop = aiMsgs.scrollHeight;
-
-  // Prompt (simple & constrained for small model)
-  const prompt = `
-
-"${text}"
-
-`;
-
-  const result = await llm(prompt, { max_new_tokens: 35 });
-
-  // Cleanup
+  const result = await llm(`"${text}"`, { max_new_tokens: 35 });
   thinking.remove();
-  robotIdle();
-
-  // AI response
   aiMsgs.innerHTML += `<div><strong>AI:</strong> ${result[0].generated_text}</div>`;
   aiMsgs.scrollTop = aiMsgs.scrollHeight;
-
   aiBusy = false;
 }
 
-// ===================
-//  Input events
-// ===================
-
-// Send button
 aiSend.addEventListener("click", sendAIMessage);
+aiInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendAIMessage(); });
 
-// Enter key
-aiInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendAIMessage();
-});
 
+
+// ===================
+//  Mission Terminal
+// ===================
+const MissionTerminal = (() => {
+  const LINES = [
+    { prefix: "SYS",  text: "INITIALIZING DOSSIER...",              delay: 0   },
+    { prefix: "ID",   text: "SAJED SARABANDI",                       delay: 320 },
+    { prefix: "LOC",  text: "ARNHEM, NETHERLANDS",                   delay: 260 },
+    { prefix: "ROLE", text: "SOFTWARE ENGINEER",                     delay: 260 },
+    { prefix: "SPEC", text: "COMPUTER VISION",                       delay: 240 },
+    { prefix: "SPEC", text: "SATELLITE REMOTE SENSING",              delay: 200 },
+    { prefix: "SPEC", text: "BIOINFORMATICS",                        delay: 200 },
+    { prefix: "LANG", text: "PYTHON  /  C++  /  JAVASCRIPT",         delay: 260 },
+    { prefix: "EDU",  text: "M.SC. GEOMATICS — TU DELFT",            delay: 260 },
+    { prefix: "EXP",  text: "SRON SPACE RESEARCH  |  VEERASENSE",    delay: 260 },
+    { prefix: "STAT", text: "AVAILABLE FOR NEW MISSIONS",            delay: 300 },
+    { prefix: "SYS",  text: "DOSSIER COMPLETE. AWAITING INPUT...",   delay: 340 },
+  ];
+
+  const CHAR_SPEED   = 28;   // ms per character
+  const BLINK_AFTER  = 400;  // ms before cursor starts blinking at end of line
+
+  let frameId    = null;
+  let lineTimers = [];
+  let charTimers = [];
+
+  function getEl() { return document.getElementById('mission-terminal'); }
+
+  function prefixColor(p) {
+    if (p === 'SYS')  return '#00d9c0';
+    if (p === 'STAT') return '#e5d352';
+    if (p === 'SPEC') return '#7fa8c9';
+    return '#00d9c0';
+  }
+
+  function typeInto(lineEl, textEl, fullText, cb) {
+    let i = 0;
+    function tick() {
+      if (i <= fullText.length) {
+        textEl.textContent = fullText.slice(0, i);
+        i++;
+        charTimers.push(setTimeout(tick, CHAR_SPEED));
+      } else {
+        charTimers.push(setTimeout(() => {
+          lineEl.classList.add('done');
+          if (cb) cb();
+        }, BLINK_AFTER));
+      }
+    }
+    tick();
+  }
+
+  function play() {
+    stop();
+    const el = getEl();
+    if (!el) return;
+    el.innerHTML = '';
+
+    let cumulativeDelay = 200;
+
+    LINES.forEach((entry, idx) => {
+      cumulativeDelay += entry.delay;
+      const d = cumulativeDelay;
+
+      lineTimers.push(setTimeout(() => {
+        const row = document.createElement('div');
+        row.className = 'tm-line';
+
+        const pfx = document.createElement('span');
+        pfx.className = 'tm-prefix';
+        pfx.textContent = entry.prefix;
+        pfx.style.color = prefixColor(entry.prefix);
+
+        const sep = document.createElement('span');
+        sep.className = 'tm-sep';
+        sep.textContent = ' › ';
+
+        const txt = document.createElement('span');
+        txt.className = 'tm-text';
+
+        const cur = document.createElement('span');
+        cur.className = 'tm-cursor';
+        cur.textContent = '█';
+
+        row.appendChild(pfx);
+        row.appendChild(sep);
+        row.appendChild(txt);
+        row.appendChild(cur);
+        el.appendChild(row);
+
+        // scroll into view
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+        typeInto(row, txt, entry.text, () => {
+          cur.classList.add('blink');
+        });
+
+        // hide cursor on all previous lines once next line starts typing
+        if (idx > 0) {
+          const prev = el.querySelectorAll('.tm-cursor');
+          prev.forEach((c, ci) => { if (ci < prev.length - 1) c.style.display = 'none'; });
+        }
+      }, d));
+
+      cumulativeDelay += entry.text.length * CHAR_SPEED + BLINK_AFTER;
+    });
+  }
+
+  function stop() {
+    lineTimers.forEach(clearTimeout);
+    charTimers.forEach(clearTimeout);
+    lineTimers = [];
+    charTimers = [];
+    if (frameId) { cancelAnimationFrame(frameId); frameId = null; }
+    const el = getEl();
+    if (el) el.innerHTML = '';
+  }
+
+  return { play, stop };
+})();
+
+// ===================
+//  SRS Image Viewer — clock arc
+// ===================
+const SRSViewer = (() => {
+  const SATELLITES = [
+    {
+      img: 'landsat.png',
+      name: 'Landsat',
+      tag: 'USGS / NASA',
+      desc: 'Monthly reconstruction of data-gap-free, cloud-free surface reflectance composites at 30 m resolution.'
+    },
+    {
+      img: 'sentinel2.png',
+      name: 'Sentinel-2',
+      tag: 'ESA Copernicus',
+      desc: 'Object detection on reconstructed agricultural farms using 10 m resolution multispectral imagery.'
+    },
+    {
+      img: 'spex_1.png',
+      name: 'Sentinel-5P / SPEXone',
+      tag: 'ESA / SRON',
+      desc: 'Shift detection on the SPEXone airborne polarimeter instrument for accurate georegistration.'
+    },
+    {
+      img: 'thesis_1.png',
+      name: 'Suomi NPP',
+      tag: 'NASA / NOAA',
+      desc: 'Super-resolution deep learning model for ammonia (NH₃) concentration retrieval from coarse satellite data.'
+    },
+    {
+      img: 'metop.png',
+      name: 'MetOp',
+      tag: 'EUMETSAT / ESA',
+      desc: 'Global fire and flood monitoring using thermal infrared and microwave channels for disaster response.'
+    }
+  ];
+
+  let current = 0;
+  let open    = false;
+  let cooling = false;
+  let current_el = null;
+
+  const viewer  = () => document.getElementById('srs-viewer');
+  const textPanel = () => document.getElementById('srs-text-panel');
+
+  function updateText(idx) {
+    const panel = textPanel();
+    if (!panel) return;
+    const sat = SATELLITES[idx];
+    panel.innerHTML = `
+      <div class="srs-counter">${idx + 1} / ${SATELLITES.length}</div>
+      <div class="srs-sat-tag">${sat.tag}</div>
+      <div class="srs-sat-name">${sat.name}</div>
+      <p class="srs-sat-desc">${sat.desc}</p>
+      <div class="srs-nav-hint">scroll to navigate</div>
+    `;
+    panel.classList.remove('srs-text-out');
+    panel.classList.add('srs-text-in');
+    // reset animation next time
+    void panel.offsetWidth;
+  }
+
+  function makeItem(sat) {
+    const wrap = document.createElement('div');
+    wrap.className = 'srs-arc-wrap';
+    const item = document.createElement('div');
+    item.className = 'srs-arc-item';
+    const img = document.createElement('img');
+    img.src = sat.img;
+    img.alt = sat.name;
+    item.appendChild(img);
+    wrap.appendChild(item);
+    return { wrap, item };
+  }
+
+  function show() {
+    open = true;
+    current = 0;
+    const v = viewer();
+    if (!v) return;
+    v.innerHTML = '';
+    v.classList.add('open');
+
+    const panel = textPanel();
+    if (panel) panel.classList.add('open');
+
+    const { wrap, item } = makeItem(SATELLITES[current]);
+    item.classList.add('entering');
+    item.addEventListener('animationend', () => {
+      item.classList.remove('entering');
+      item.classList.add('at-rest');
+    }, { once: true });
+    v.appendChild(wrap);
+    current_el = { wrap, item };
+    updateText(current);
+  }
+
+  function hide() {
+    open = false;
+    const v = viewer();
+    if (!v) return;
+    v.classList.remove('open');
+    v.innerHTML = '';
+    current_el = null;
+    const panel = textPanel();
+    if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+  }
+
+  function go(dir) {
+    if (!open || cooling) return;
+    cooling = true;
+    setTimeout(() => { cooling = false; }, 620);
+
+    const v = viewer();
+    if (!v) return;
+
+    // Exit current
+    if (current_el) {
+      const { item: old_item, wrap: old_wrap } = current_el;
+      old_item.classList.remove('at-rest');
+      old_item.classList.add('exiting');
+      old_item.addEventListener('animationend', () => old_wrap.remove(), { once: true });
+    }
+
+    // Advance index
+    current = ((current + dir) % SATELLITES.length + SATELLITES.length) % SATELLITES.length;
+
+    // Enter new
+    const { wrap, item } = makeItem(SATELLITES[current]);
+    item.classList.add('entering');
+    v.appendChild(wrap);
+    current_el = { wrap, item };
+
+    // Animate text out then in
+    const panel = textPanel();
+    if (panel) {
+      panel.classList.remove('srs-text-in');
+      panel.classList.add('srs-text-out');
+      setTimeout(() => updateText(current), 200);
+    }
+  }
+
+  window.addEventListener('wheel', (e) => {
+    if (!open) return;
+    e.preventDefault();
+    go(e.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
+  return { show, hide };
+})();
+
+// ===================
+//  Project Viewer — image arc carousel (Bio / CV / SRS)
+// ===================
+const ProjectViewer = (() => {
+  let current     = 0;
+  let currentCat  = null;
+  let current_el  = null;
+  let open        = false;
+  let cooling     = false;
+
+  const viewer  = () => document.getElementById('project-viewer');
+  const switcher= () => document.getElementById('cat-switcher');
+  const cvPanel = () => document.getElementById('cv-text-panel');
+
+  // Get images for a category
+  function getImages(cat) {
+    if (cat === 'srs') return [
+      { img: 'spex_1.png',  title: 'SPEXone Georegistration' },
+      { img: 'thesis_1.png',title: 'NH₃ Super-Resolution' }
+    ];
+    return (CATEGORY_PROJECTS[cat] || [])
+      .filter(e => e && e.img)
+      .map(e => ({ img: e.img, title: e.title || e.name || '', url: e.url || null, desc: e.desc || '' }));
+  }
+
+  function updateCVText(images, idx) {
+    const panel = cvPanel();
+    if (!panel) return;
+    const entry = images[idx];
+    const total = images.length;
+    panel.innerHTML = `
+      <div class="cv-counter">${idx + 1} / ${total}</div>
+      <div class="cv-proj-tag">Computer Vision</div>
+      <div class="cv-proj-name">${entry.title}</div>
+      <p class="cv-proj-desc">${entry.desc}</p>
+      <div class="cv-nav-hint">scroll to navigate</div>
+    `;
+    panel.classList.remove('cv-text-out');
+    panel.classList.add('cv-text-in');
+    void panel.offsetWidth;
+  }
+
+  function makeItem(entry) {
+    const wrap = document.createElement('div');
+    wrap.className = 'pv-arc-wrap';
+
+    const item = document.createElement(entry.url ? 'a' : 'div');
+    item.className = 'pv-arc-item pv-active';
+    if (entry.url) {
+      item.href = entry.url;
+      item.target = '_blank';
+      item.rel = 'noopener noreferrer';
+    }
+
+    const isVideo = entry.img && entry.img.toLowerCase().endsWith('.mp4');
+    if (isVideo) {
+      const vid = document.createElement('video');
+      vid.src = entry.img;
+      vid.autoplay = true;
+      vid.loop = true;
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.setAttribute('playsinline', '');
+      vid.className = 'pv-video';
+      item.appendChild(vid);
+    } else {
+      const img = document.createElement('img');
+      img.src = entry.img;
+      img.alt = entry.title || '';
+      item.appendChild(img);
+    }
+
+    if (entry.title) {
+      const cap = document.createElement('div');
+      cap.className = 'pv-caption';
+      cap.textContent = entry.title;
+      item.appendChild(cap);
+    }
+
+    wrap.appendChild(item);
+    return { wrap, item };
+  }
+
+  function showImage(cat, idx) {
+    const v = viewer();
+    if (!v) return;
+    const images = getImages(cat);
+    if (!images.length) return;
+    const entry = images[idx % images.length];
+
+    // Exit current
+    if (current_el) {
+      const { item: old_item, wrap: old_wrap } = current_el;
+      old_item.classList.remove('at-rest');
+      old_item.classList.add('exiting');
+      old_item.addEventListener('animationend', () => old_wrap.remove(), { once: true });
+    }
+
+    const { wrap, item } = makeItem(entry);
+    item.classList.add('entering');
+    v.appendChild(wrap);
+    current_el = { wrap, item };
+
+    // Update CV text panel if in cv mode
+    if (cat === 'cv') updateCVText(images, idx % images.length);
+  }
+
+  function openCat(cat) {
+    currentCat = cat;
+    current    = 0;
+    open       = true;
+    current_el = null;
+
+    const v = viewer();
+    if (v) { v.innerHTML = ''; v.classList.add('open'); }
+
+    // Show/hide CV text panel
+    const panel = cvPanel();
+    if (panel) {
+      if (cat === 'cv') { panel.classList.add('open'); }
+      else              { panel.classList.remove('open'); panel.innerHTML = ''; }
+    }
+
+    // Show SRS viewer for remote sensing, image arc for others
+    if (cat === 'srs') {
+      if (v) v.classList.remove('open'); // hide left arc
+      SRSViewer.show();
+    } else {
+      SRSViewer.hide();
+      showImage(cat, 0);
+    }
+
+    // Category switcher
+    const sw = switcher();
+    if (sw) {
+      sw.classList.add('open');
+      sw.querySelectorAll('.cat-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.cat === cat);
+      });
+    }
+  }
+
+  function go(dir) {
+    if (!open || cooling || currentCat === 'srs') return;
+    cooling = true;
+    setTimeout(() => { cooling = false; }, 620);
+    const images = getImages(currentCat);
+    current = ((current + dir) % images.length + images.length) % images.length;
+
+    // Animate CV text out then in
+    if (currentCat === 'cv') {
+      const panel = cvPanel();
+      if (panel) {
+        panel.classList.remove('cv-text-in');
+        panel.classList.add('cv-text-out');
+        setTimeout(() => updateCVText(images, current), 200);
+      }
+    }
+
+    showImage(currentCat, current);
+  }
+
+  function close() {
+    open = false;
+    current_el = null;
+    const v = viewer(), sw = switcher();
+    if (v) { v.classList.remove('open'); v.innerHTML = ''; }
+    if (sw) sw.classList.remove('open');
+    SRSViewer.hide();
+    const panel = cvPanel();
+    if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+  }
+
+  // Cat → moon index map
+  const CAT_MOON = { bioinformatics: 0, srs: 1, cv: 2 };
+
+  // Wire category tabs
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.cat-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const cat = tab.dataset.cat;
+        current_el = null;
+        const v = viewer();
+        if (v) v.innerHTML = '';
+        // Move camera to the matching moon
+        const moonIdx = CAT_MOON[cat];
+        if (moonIdx !== undefined) focusCameraOnMoon(moonIdx);
+        openCat(cat);
+      });
+    });
+  });
+
+  // Scroll
+  window.addEventListener('wheel', (e) => {
+    if (!open || currentCat === 'srs') return;
+    e.preventDefault();
+    go(e.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
+  return { open: openCat, close, get isOpen() { return open; } };
+})();
